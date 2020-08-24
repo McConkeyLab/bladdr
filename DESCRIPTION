@@ -1,16 +1,21 @@
 Package: bladdr
-Title: What the Package Does (One Line, Title Case)
-Version: 0.0.0.9000
+Title: A Helping Hand in McConkey Land
+Version: 0.0.0.2
 Authors@R: 
-    person(given = "First",
-           family = "Last",
+    person(given = "Kai",
+           family = "Aragaki",
            role = c("aut", "cre"),
-           email = "first.last@example.com",
-           comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
-License: `use_mit_license()`, `use_gpl3_license()` or friends to
-    pick a license
+           email = "adamaragaki@jhmi.edu",
+           comment = c(ORCID = "0000-0002-9458-0426"))
+Description: The goal of `bladdr` is to make the tedious lab tasks a little less tedious and a lot more reproducible.
+License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.1
+Imports: 
+    readxl,
+    ggplot2,
+    dplyr,
+    magrittr,
+    stringr

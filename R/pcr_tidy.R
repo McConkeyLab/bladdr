@@ -1,17 +1,43 @@
+#' Tidy a PCR Excel File
+#'
+#' Takes in a fresh results output from ddCT qPCR and converts it into a tidy
+#' format. Useful for downstream analyses.
+#'
+#' @param file_path Path to an excel file containing the results of a ddCT qPCR
+#'   run. If left blank, will open up interactive file chooser.
+#'
+#' @return Tidy results dataframe
+#' @export
+#'
+#' @examples
+#' dat_path <- system.file("extdata", "untidy-pcr-example.xls", package = "bladdr")
+#'
+#' # Before tidying
+#' dat_dirty <- readxl::read_excel(dat_path, sheet = "Results")
+#' dat_dirty[1:10]
+#'
+#' # After tidying
+#' dat_clean <- pcr_tidy(dat_path)
+#' dat_clean[1:10]
+
 pcr_tidy <- function(file_path = NULL) {
 
         if (is.null(file_path)) {
                 file_path <- file.choose()
         }
 
-        dat <- readxl::read_excel(file_path, sheet = "Results")
+        dat_og <- readxl::read_excel(file_path, sheet = "Results")
 
-        ind_start <- which(dat[,1] == "Well")
-        ind_end   <- which(dat[,1] == "Analysis Type")
+        ind_start <- which(dat_og[,1] == "Well")
+        ind_end   <- which(dat_og[,1] == "Analysis Type")
 
-        dat <- dat[-c(1:(ind_start-1), (ind_end-1):nrow(dat)),]
+        dat <- dat_og[-c(1:(ind_start-1), (ind_end-1):nrow(dat_og)),]
 
         colnames(dat) <- dat[1,]
 
         dat <- dat[-1,]
+
+        dat$plate_type <- colnames(dat_og)[2]
+        dat
+
 }
