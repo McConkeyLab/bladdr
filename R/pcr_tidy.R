@@ -35,7 +35,8 @@ pcr_tidy <- function(file_path = NULL) {
 
         colnames(dat) <- dat[1,]
 
-        dat <- dat[-1,]
+        dat <- dat[-1,]%>%
+                dplyr::mutate(dplyr::across(dplyr::matches("^(Delta )*C[t|T].*"), as.numeric))
 
         dat$plate_type <- colnames(dat_og)[2]
         dat
