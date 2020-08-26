@@ -1,4 +1,4 @@
-# bladdr: A Helping Hand in McConkey Land
+# bladdr: A Helping Hand in McConkey Land <img src='man/figures/logo.png' align="right" height="139" />
 
 bladdr's vision is to be a package that can automate everyday days in small functions that don't try to do too much. 
 
