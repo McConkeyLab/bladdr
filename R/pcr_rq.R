@@ -23,6 +23,6 @@ pcr_rq <- function(data, relative_sample) {
                 dplyr::distinct(.data$`Sample Name`, .data$`Target Name`, .keep_all = T) %>%
                 dplyr::filter(!is.na(.data$`Sample Name`)) %>%
                 dplyr::group_by(.data$`Target Name`) %>%
-                dplyr::mutate(ddct = .data$`Delta Ct Mean` - .data$`Delta Ct Mean`[.data$`Sample Name` == relative_sample],
-                              rerq = 1/2^.data$ddct)
+                dplyr::mutate(`Delta Delta Ct` = .data$`Delta Ct Mean` - .data$`Delta Ct Mean`[.data$`Sample Name` == relative_sample],
+                              RQ = 1/2^.data$`Delta Delta Ct`)
 }

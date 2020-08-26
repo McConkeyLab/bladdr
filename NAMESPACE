@@ -3,6 +3,7 @@
 export("%>%")
 export(pcr_control)
 export(pcr_plate_view)
+export(pcr_plot)
 export(pcr_rq)
 export(pcr_tidy)
 export(volcano_plot)

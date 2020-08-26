@@ -38,7 +38,7 @@ pcr_tidy <- function(file_path = NULL) {
         colnames(dat) <- dat[1,]
 
         dat <- dat[-1,] %>%
-                dplyr::mutate(dplyr::across(dplyr::matches("^(Delta )*C[t|T].*"), as.numeric),
+                dplyr::mutate(dplyr::across(dplyr::matches("^(Delta )*C[t|T].*|^RQ"), as.numeric),
                               well_row = stringr::str_extract(.data$`Well Position`, "^.{1}"),
                               well_col = as.numeric(stringr::str_extract(.data$`Well Position`, "[:digit:]{1,2}$")),
                               well_row = as.numeric(factor(.data$well_row, levels = LETTERS)))
