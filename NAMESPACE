@@ -2,6 +2,9 @@
 
 export("%>%")
 export(pcr_control)
+export(pcr_plate_view)
 export(pcr_rq)
 export(pcr_tidy)
+export(volcano_plot)
 importFrom(magrittr,"%>%")
+importFrom(rlang,.data)

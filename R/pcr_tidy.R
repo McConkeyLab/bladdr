@@ -9,6 +9,8 @@
 #' @return Tidy results dataframe
 #' @export
 #'
+#' @importFrom rlang .data
+#'
 #' @examples
 #' dat_path <- system.file("extdata", "untidy-pcr-example.xls", package = "bladdr")
 #'
@@ -35,10 +37,14 @@ pcr_tidy <- function(file_path = NULL) {
 
         colnames(dat) <- dat[1,]
 
-        dat <- dat[-1,]%>%
-                dplyr::mutate(dplyr::across(dplyr::matches("^(Delta )*C[t|T].*"), as.numeric))
+        dat <- dat[-1,] %>%
+                dplyr::mutate(dplyr::across(dplyr::matches("^(Delta )*C[t|T].*"), as.numeric),
+                              well_row = stringr::str_extract(.data$`Well Position`, "^.{1}"),
+                              well_col = as.numeric(stringr::str_extract(.data$`Well Position`, "[:digit:]{1,2}$")),
+                              well_row = as.numeric(factor(.data$well_row, levels = LETTERS)))
 
         dat$plate_type <- colnames(dat_og)[2]
+
         dat
 
 }

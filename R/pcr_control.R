@@ -6,6 +6,8 @@
 #' @return A tibble
 #' @export
 #'
+#' @importFrom rlang .data
+#'
 #' @examples
 #' dat_path <- system.file("extdata", "untidy-pcr-example.xls", package = "bladdr")
 #'
@@ -13,8 +15,8 @@
 #' pcr_control("GAPDH")
 pcr_control <- function(data, control_probe) {
         data %>%
-                dplyr::distinct(`Sample Name`, `Target Name`, .keep_all = T) %>%
-                dplyr::filter(!is.na(`Sample Name`)) %>%
-                dplyr::group_by(`Sample Name`) %>%
-                dplyr::mutate(`Delta Ct Mean` = `Ct Mean` - `Ct Mean`[`Target Name` == control_probe])
+                dplyr::distinct(.data$`Sample Name`, .data$`Target Name`, .keep_all = T) %>%
+                dplyr::filter(!is.na(.data$`Sample Name`)) %>%
+                dplyr::group_by(.data$`Sample Name`) %>%
+                dplyr::mutate(`Delta Ct Mean` = .data$`Ct Mean` - .data$`Ct Mean`[.data$`Target Name` == control_probe])
 }
