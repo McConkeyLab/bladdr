@@ -17,8 +17,9 @@ Plot qPCR results
 }
 \examples{
 
-dat_path <- system.file("extdata", "untidy-pcr-example.xls", package = "bladdr") \%>\%
-pcr_tidy() \%>\%
+dat_path <- system.file("extdata", "untidy-pcr-example.xls", package = "bladdr")
+pcr_tidy(dat_path) \%>\%
+pcr_rq("RD1") \%>\%
 pcr_plot()
 
 }

@@ -37,7 +37,8 @@ pcr_tidy <- function(file_path = NULL) {
                 t()
         colnames(exp_dat) <- make.names(exp_dat[1,])
         exp_dat <- exp_dat[-1,]
-        exp_dat <- t(exp_dat) %>% as.data.frame()
+        exp_dat <- t(exp_dat) %>%
+                as.data.frame()
 
         dat <- dat_og[-c(1:(ind_start-1), (ind_end-1):nrow(dat_og)),]
         names <- gsub(" ", "_", dat[1,])
@@ -45,11 +46,11 @@ pcr_tidy <- function(file_path = NULL) {
         colnames(dat) <- names
 
         dat <- dat[-1,] %>%
-                dplyr::mutate(dplyr::across(dplyr::matches("^(Delta )*C[t|T].*|^RQ"), as.numeric),
+                dplyr::mutate(dplyr::across(dplyr::matches("^(delta )*ct.*|^rq"), as.numeric),
                               well_row = stringr::str_extract(.data$well_position, "^.{1}"),
                               well_col = as.numeric(stringr::str_extract(.data$well_position, "[:digit:]{1,2}$")),
                               well_row = as.numeric(factor(.data$well_row, levels = LETTERS))) %>%
-                dplyr::select(-well_position)
+                dplyr::select(-.data$well_position)
 
         dat$plate_type <- colnames(dat_og)[2]
         dat$analysis_type <- exp_dat$Analysis.Type
