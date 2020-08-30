@@ -15,8 +15,8 @@
 #' pcr_control("GAPDH")
 pcr_control <- function(data, control_probe) {
         data %>%
-                dplyr::distinct(.data$`Sample Name`, .data$`Target Name`, .keep_all = T) %>%
-                dplyr::filter(!is.na(.data$`Sample Name`)) %>%
-                dplyr::group_by(.data$`Sample Name`) %>%
-                dplyr::mutate(`Delta Ct Mean` = .data$`Ct Mean` - .data$`Ct Mean`[.data$`Target Name` == control_probe])
+                dplyr::distinct(.data$sample_name, .data$target_name, .keep_all = T) %>%
+                dplyr::filter(!is.na(.data$sample_name)) %>%
+                dplyr::group_by(.data$sample_name) %>%
+                dplyr::mutate(delta_ct_mean = .data$ct_mean - .data$ct_mean[.data$target_name == control_probe])
 }

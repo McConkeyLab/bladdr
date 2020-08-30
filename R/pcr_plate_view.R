@@ -13,7 +13,7 @@
 #'
 pcr_plate_view <- function(tidy_pcr) {
         tidy_pcr %>%
-                ggplot2::ggplot(ggplot2::aes(x = .data$well_col, y = .data$well_row, fill = .data$`Target Name`)) +
+                ggplot2::ggplot(ggplot2::aes(x = .data$well_col, y = .data$well_row, fill = .data$target_name)) +
                 ggplot2::geom_tile(ggplot2::aes(size = 2)) +
                 ggplot2::coord_cartesian(xlim = c(1,24), ylim = c(16, 1)) +
                 ggplot2::scale_y_continuous(breaks = 1:16, labels = LETTERS[1:16]) +

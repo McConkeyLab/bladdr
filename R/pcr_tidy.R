@@ -33,18 +33,29 @@ pcr_tidy <- function(file_path = NULL) {
         ind_start <- which(dat_og[,1] == "Well")
         ind_end   <- which(dat_og[,1] == "Analysis Type")
 
-        dat <- dat_og[-c(1:(ind_start-1), (ind_end-1):nrow(dat_og)),]
+        exp_dat <- dat_og[ind_end:nrow(dat_og), 1:2] %>%
+                t()
+        colnames(exp_dat) <- make.names(exp_dat[1,])
+        exp_dat <- exp_dat[-1,]
+        exp_dat <- t(exp_dat) %>% as.data.frame()
 
-        colnames(dat) <- dat[1,]
+        dat <- dat_og[-c(1:(ind_start-1), (ind_end-1):nrow(dat_og)),]
+        names <- gsub(" ", "_", dat[1,])
+        names <- tolower(names)
+        colnames(dat) <- names
 
         dat <- dat[-1,] %>%
                 dplyr::mutate(dplyr::across(dplyr::matches("^(Delta )*C[t|T].*|^RQ"), as.numeric),
-                              well_row = stringr::str_extract(.data$`Well Position`, "^.{1}"),
-                              well_col = as.numeric(stringr::str_extract(.data$`Well Position`, "[:digit:]{1,2}$")),
-                              well_row = as.numeric(factor(.data$well_row, levels = LETTERS)))
+                              well_row = stringr::str_extract(.data$well_position, "^.{1}"),
+                              well_col = as.numeric(stringr::str_extract(.data$well_position, "[:digit:]{1,2}$")),
+                              well_row = as.numeric(factor(.data$well_row, levels = LETTERS))) %>%
+                dplyr::select(-well_position)
 
         dat$plate_type <- colnames(dat_og)[2]
+        dat$analysis_type <- exp_dat$Analysis.Type
+        dat$control <- exp_dat$Endogenous.Control
+        dat$conf_int <- exp_dat$RQ.Min.Max.Confidence.Level
+        dat$ref_samp <- exp_dat$Reference.Sample
 
         dat
-
 }

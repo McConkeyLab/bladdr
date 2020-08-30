@@ -20,9 +20,7 @@
 #' pcr_rq("U6D1")
 pcr_rq <- function(data, relative_sample) {
         data %>%
-                dplyr::distinct(.data$`Sample Name`, .data$`Target Name`, .keep_all = T) %>%
-                dplyr::filter(!is.na(.data$`Sample Name`)) %>%
-                dplyr::group_by(.data$`Target Name`) %>%
-                dplyr::mutate(`Delta Delta Ct` = .data$`Delta Ct Mean` - .data$`Delta Ct Mean`[.data$`Sample Name` == relative_sample],
-                              RQ = 1/2^.data$`Delta Delta Ct`)
+                dplyr::distinct(.data$sample_name, .data$target_name, .keep_all = T) %>%
+                dplyr::filter(!is.na(.data$sample_name)) %>%
+                dplyr::group_by(.data$target_name)
 }
