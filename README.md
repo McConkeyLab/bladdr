@@ -10,7 +10,9 @@ Any output of these functions should produce a report with all relevant informat
 
 ## Clarity
 
-Functions should strive to be simple over elegant when one must be decided over the other
+Functions should strive to be simple over elegant when one must be decided over the other.
+Functions should be allowed to be opinionated about the input of data, as the input format is often not optimal for working with.
+* However, input data should not be removed without precedent, only reshaped or refactored. The goal of these functions is to have the be able to be peppered in to every day workflows. Therefore they must be flexible and humble in their function, lest someone want to use them in a different way.
 
 ## Modularization
 
