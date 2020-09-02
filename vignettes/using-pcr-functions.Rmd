@@ -10,7 +10,12 @@ vignette: >
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  fig.width=6, 
+  fig.height=4, 
+  out.width="100%", 
+  dpi = 200
+  
 )
 ```
 
@@ -21,7 +26,7 @@ PCR data appear to be simple to work with at the outset - QuantStudio can output
 
 Additionally, the plots output by QuantStudio are fairly ugly and inflexible. Outputting them is tedious, as is rearranging columns.
 
-In this vignette, I'll perform a routine analysis on a rather untidy dataset using the pcr_* suite of functions. The pcr_* suite of functions seek to make life a little easier and a lot more reproducible by allowing many of the previously QuantStudio specific tasks to be done in R.  
+In this vignette, I'll perform a routine analysis on a rather untidy dataset using the `pcr_*` suite of functions. The `pcr_*` suite of functions seek to make life a little easier and a lot more reproducible by allowing many of the previously QuantStudio specific tasks to be done in R.  
 
 # Reading in Data
 
@@ -29,6 +34,7 @@ In this vignette, I'll perform a routine analysis on a rather untidy dataset usi
 library(bladdr)
 library(dplyr)
 library(ggplot2)
+library(stringr)
 ```
 
 We have a particular advantage because although the data are untidy, they are untidy in a very specific way. Reading in data is as simple as running `pcr_tidy`, which is given a path to the pcr .xls(x) file. If no path is given, an interactive file explorer window will appear for the user to choose the file.
@@ -46,9 +52,9 @@ select(dat, plate_type:ref_samp)
 
 # Plate Plotting with `pcr_plate_view`
 
-`pcr_tidy` also takes the liberty of modifying the `Well Position` feature into two separate features - `well_row` and `well_col`. This makes downstream plotting particularly easy. A built in function an do this automatically for us:
+`pcr_tidy` also adds two features derived from the `well_position` feature into two separate features - `well_row` and `well_col`. This makes downstream plotting particularly easy. A built in function can do this automatically for us:
 
-```{r plot_plate_target, fig.width=6, fig.height=4}
+```{r plot_plate_target}
 pcr_plate_view(dat)
 ```
 
@@ -56,25 +62,25 @@ This high level overview lets us see there's something curious going on with A1.
 
 What about the *sample* layout?
 
-```{r plot_plate_sample, fig.width=6, fig.height=4}
+```{r plot_plate_sample}
 pcr_plate_view(dat, sample_name)
 ```
 
 We can also look at CT:
 
-```{r plot_plate_ct, fig.width=6, fig.height=4}
+```{r plot_plate_ct}
 pcr_plate_view(dat, fill = ct) + scale_fill_viridis_c()
 ```
 
 Looks like some didn't amplify at all. 
-You might consider viewing with RQ:
+You might consider looking at it with `rq` but...
 
-```{r plot_plate_rq, fig.width=6, fig.height=4}
+```{r plot_plate_rq}
 pcr_plate_view(dat, fill = rq) + scale_fill_viridis_c()
 ```
 
 Immediately we see a loss of information: Not only are the scales between
-cell lines wildly different, but some of the targets aren't even there? What's going on?
+cell lines wildly different, but some of the targets aren't even there! What's going on?
 
 If we remember back, our reference sample was RT112, which does not appear to express one of the targets at all. Therefore a quantity relative to 0 doesn't make any sense!
 
@@ -82,22 +88,68 @@ If we remember back, our reference sample was RT112, which does not appear to ex
 
 We can naively plot all of the data at once using `pcr_plot`
 
-```{r, fig.width=6, fig.height=4}
+```{r}
 pcr_plot(dat)
 ```
 
-We notice the differences between cell lines, but it makes it difficult to look at differences between conditions. We can split the data up by cell line and then recalculate rqs individually.
+We notice the differences between cell lines, but the large dynamic range makes it difficult to look at differences between conditions. We can split the data up by cell line and then recalculate rqs individually.
 
 # Rescaling Data with `pcr_rq`
 
-First, we need to extract the cell line from the sample name:
+First, we need to extract the cell line from the sample name. Additionally, I don't like how it says "Zeb1" and "Zeb2" instead of "ZEB1" and "ZEB2" (the capitalization leads one to believe we are measuring the protein Zeb1 rather than the transcript that encodes it, ZEB1). I'll change that here.
+
+```{r}
+dat <- dat %>% 
+  mutate(cell_line = str_extract(sample_name, "^.*(?=[:space:])")) %>% 
+  mutate(target_name = str_replace(target_name, "Zeb", "ZEB"))
+```
+
+As an example, let's look at UC14:
+
+```{r}
+uc14 <- dat %>% 
+  filter(cell_line == "UC14") %>% 
+  pcr_rq("UC14 PBS")
+
+pcr_plot(uc14)
+```
+
+I personally prefer it when the control is on the left and the experimental conditions are on the right - let's flip them. While we're at it, let's get rid of the legend - it doesn't tell us any extra information and is just taking up space.
+
+```{r}
+uc14 <- uc14 %>% 
+  mutate(sample_name = factor(sample_name, levels = c("UC14 PBS", "UC14 Drug")))
+
+pcr_plot(uc14) +
+  theme(legend.position = "none")
+```
+
+The same kind of reorganization can be done with `target_names` as well - if you wanted to put the control target (here PPIA) at the end.
+
+# Ommiting a case 
+
+Suppose you have reason to believe that one of your colleagues (or perhaps you yourself) spit into your C22 well (the spit was very accurate). If we naively remove it, this is what we get:
+
+```{r}
+naive <- uc14 %>% 
+  filter(well_position != "C24")
+
+pcr_plot(naive)
+```
+
+Umm...it doesn't look any different. And that's what we should expect: the plotting function doesn't do any calculations: **It only plots the values already stored within it.** To get updated values, we need to use `pcr_rq` again:
 
 ```{r}
 
+wise <- uc14 %>% 
+  filter(well_position != "C24") %>%
+  pcr_rq("UC14 PBS")
+
+pcr_plot(wise)
 ```
 
+There we go! A nice updated chart.
 
-```{r}
+# Conclusion
 
-```
-
+the `pcr_*` suite of functions are simple, flexible, and pipeable helpers for those working with PCR data.

@@ -49,8 +49,7 @@ pcr_tidy <- function(file_path = NULL) {
                 dplyr::mutate(dplyr::across(dplyr::matches("^(delta )*ct.*|^rq"), as.numeric),
                               well_row = stringr::str_extract(.data$well_position, "^.{1}"),
                               well_col = as.numeric(stringr::str_extract(.data$well_position, "[:digit:]{1,2}$")),
-                              well_row = as.numeric(factor(.data$well_row, levels = LETTERS))) %>%
-                dplyr::select(-.data$well_position)
+                              well_row = as.numeric(factor(.data$well_row, levels = LETTERS)))
 
         dat$plate_type <- colnames(dat_og)[2]
         dat$analysis_type <- exp_dat$Analysis.Type
