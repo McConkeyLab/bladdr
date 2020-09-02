@@ -1,0 +1,102 @@
+---
+title: "using-pcr-functions"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{using-pcr-functions}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+
+# Introduction
+
+PCR data appear to be simple to work with at the outset - QuantStudio can output barcharts, and it even readily outputs the data in tabular formats. However, some tasks, like omitting a particular measurement, no longer make the results valid. One must remember to omit it in QuantStudio, recalculate the values, then plot the results - or risk having an inaccurate plot! 
+
+Additionally, the plots output by QuantStudio are fairly ugly and inflexible. Outputting them is tedious, as is rearranging columns.
+
+The pcr_* suite of functions seek to make life a little easier and a lot more reproducible by allowing many of the previously QuantStudio specific tasks to be done in R.  
+
+# Reading in Data
+
+```{r setup}
+library(bladdr)
+library(dplyr)
+library(ggplot2)
+```
+
+We have a particular advantage because although the data are untidy, they are untidy in a very specific way. Reading in data is as simple as running `pcr_tidy`, which is given a path to the pcr .xls(x) file. If no path is given, an interactive file explorer window will appear for the user to choose the file.
+
+```{r read_in_data}
+dat <- pcr_tidy("../inst/extdata/untidy-pcr-example-2.xlsx")
+dat
+```
+
+The typical format of PCR data is woefully non-rectangular. `pcr_tidy` fixes this by skipping to the good bits, but also pulling out useful metadata supplied in the header and footer of the dataset - like the last few columns:
+
+```{r}
+select(dat, plate_type:ref_samp)
+```
+
+# Plate Plotting with `pcr_plate_view`
+
+`pcr_tidy` also takes the liberty of modifying the `Well Position` feature into two separate features - `well_row` and `well_col`. This makes downstream plotting particularly easy. A built in function an do this automatically for us:
+
+```{r plot_plate_target, fig.width=6, fig.height=4}
+pcr_plate_view(dat)
+```
+
+This high level overview lets us see there's something curious going on with A1. Some wells at the bottom - likely non-targeting controls - only have two instead of three wells ascribed to them. 
+
+What about the *sample* layout?
+
+```{r plot_plate_sample, fig.width=6, fig.height=4}
+pcr_plate_view(dat, sample_name)
+```
+
+We can also look at CT:
+
+```{r plot_plate_ct, fig.width=6, fig.height=4}
+pcr_plate_view(dat, fill = ct) + scale_fill_viridis_c()
+```
+
+You might consider viewing with RQ:
+
+```{r plot_plate_rq, fig.width=6, fig.height=4}
+pcr_plate_view(dat, fill = rq) + scale_fill_viridis_c()
+```
+
+Immediately we see a loss of information: Not only are the scales between
+cell lines wildly different, but some of the targets aren't even there? What's going on?
+
+If we remember back, our reference sample was RT112, which does not appear to express one of the targets at all. Therefore a quantity relative to 0 doesn't make any sense!
+
+# Expression Plotting with `pcr_plot`
+
+We can naively plot all of the data at once using `pcr_plot`
+
+```{r, fig.width=6, fig.height=4}
+pcr_plot(dat)
+```
+
+We notice the differences between cell lines, but it makes it difficult to look at differences between conditions. We can split the data up by cell line and then recalculate rqs individually.
+
+# Rescaling Data with `pcr_rq`
+
+First, we need to extract the cell line from the sample name:
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+

@@ -19,3 +19,7 @@ Imports:
     DESeq2,
     rlang,
     tidyr
+Suggests: 
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr
