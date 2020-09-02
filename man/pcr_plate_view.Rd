@@ -4,7 +4,7 @@
 \alias{pcr_plate_view}
 \title{View sample plating layout}
 \usage{
-pcr_plate_view(tidy_pcr, fill = target_name)
+pcr_plate_view(tidy_pcr, fill = .data$target_name)
 }
 \arguments{
 \item{tidy_pcr}{an output from the \code{pcr_tidy} function}

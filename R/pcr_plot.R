@@ -5,6 +5,8 @@
 #' @return a ggplot
 #' @export
 #'
+#' @importFrom rlang .data
+#'
 #' @examples
 #'
 #' dat_path <- system.file("extdata", "untidy-pcr-example.xls", package = "bladdr")
@@ -15,7 +17,7 @@
 
 pcr_plot <- function(tidy_pcr) {
         tidy_pcr %>%
-                dplyr::filter(!is.na(.data$rq)) %>%
+                dplyr::filter(!is.na(.data$sample_name)) %>%
                 dplyr::distinct(.data$target_name, .data$sample_name, .keep_all = T) %>%
                 ggplot2::ggplot(ggplot2::aes(x = .data$sample_name, y = .data$rq, fill = .data$target_name)) +
                 ggplot2::geom_col() +
