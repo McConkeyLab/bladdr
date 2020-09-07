@@ -50,6 +50,9 @@ sharepoint_put <- function(file, file_name, dest_path, token, overwrite = F) {
         sp     <- AzureGraph::call_graph_url(token, url, http_verb = "GET")
         sp_id  <- sp$id
 
+        # Get drive ID
+
+
 
         # Get destination folder ID
         url       <- paste0(base_url, sp_id, "/drive/root:/", parsed$rest)
@@ -74,10 +77,21 @@ sharepoint_put <- function(file, file_name, dest_path, token, overwrite = F) {
 
         # Upload file
         url <- paste0(base_url, sp_id, "/drive/items/", folder_id,":/", file_name, ":/content")
-        AzureGraph::call_graph_url(token,
+        res <- AzureGraph::call_graph_url(token,
                                    url,
                                    body      = httr::upload_file(file),
                                    encode    = mime::guess_type(ext_file_name),
                                    http_verb = "PUT")
+
+
+        # Attach script called in
+        url  <- paste0("https://graph.microsoft.com/v1.0/drives/", res$parentReference$driveId, "/items/", res$id, "/listitem/fields")
+        script <- get_current_script()
+        body <- jsonlite::toJSON(list(source_code = script), pretty = T, auto_unbox = T)
+        AzureGraph::call_graph_url(token = token,
+                                   url = url,
+                                   body = body,
+                                   encode = "raw",
+                                   http_verb = "PATCH")
 }
 

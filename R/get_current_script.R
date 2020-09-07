@@ -1,3 +1,9 @@
+#' Get path of script where function is called
+#'
+#' @return
+#' @keywords internal
+#' @noRd
+#'
 get_current_script <- function() {
 
         this_file <- rstudioapi::getSourceEditorContext()$path
