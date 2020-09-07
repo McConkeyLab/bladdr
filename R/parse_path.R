@@ -4,7 +4,8 @@
 #' @param path SharePoint path copied and pasted from the icon next to the 'path' header from the file details menu in SharePoint
 #'
 #' @return a named list, including `host`, `site`, and `drive`
-#'
+#' @keywords internal
+#' @noRd
 #' @examples
 #' path <- "https://mycompany.sharepoint.com/sites/mysite/mydrive/path/to/my/file.xls"
 #' parse_path(path)
