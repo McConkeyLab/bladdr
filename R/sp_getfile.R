@@ -10,7 +10,7 @@
 #'
 #' # Getting token:
 #' \dontrun{
-#' gr <- create_graph_login() # Will trigger a login
+#' gr <- AzureGraph::create_graph_login() # Will trigger a login
 #' me <- gr$get_user("me")
 #' token <- me$token
 #' }
@@ -19,16 +19,17 @@ sp_getfile <- function(path, token) {
 
         tmp <- tempfile()
 
-        path_trimmed <- stringr::str_remove(path, "https://livejohnshopkins.sharepoint.com/sites/")
-        sp <- stringr::str_extract(path_trimmed, "^[^/]*")
-        url <- paste0("https://graph.microsoft.com/v1.0/sites/livejohnshopkins.sharepoint.com:/sites/", sp)
+        parsed <- parse_path(path)
+
+        url <- paste0("https://graph.microsoft.com/v1.0/sites/", parsed$host,":/sites/", parsed$site)
+
         sp_dat <- AzureGraph::call_graph_url(token, url, http_verb = "GET")
         sp_id <- sp_dat$id
-
-        path_dbl_trimmed <- stringr::str_remove(path_trimmed, paste0(sp, "/Shared%20Documents/"))
-        url <- paste0("https://graph.microsoft.com/v1.0/sites/", sp_id, "/drive/root:/", path_dbl_trimmed, ":/content")
-        file <- AzureGraph::call_graph_url(token, url,
-                                httr::write_disk(tmp, overwrite = T),
-                                http_verb = "GET")
-        tmp
+#
+#         path_dbl_trimmed <- stringr::str_remove(path_trimmed, paste0(sp, "/Shared%20Documents/"))
+#         url <- paste0("https://graph.microsoft.com/v1.0/sites/", sp_id, "/drive/root:/", path_dbl_trimmed, ":/content")
+#         file <- AzureGraph::call_graph_url(token, url,
+#                                 httr::write_disk(tmp, overwrite = T),
+#                                 http_verb = "GET")
+#         tmp
 }
