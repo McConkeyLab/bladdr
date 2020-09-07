@@ -21,9 +21,8 @@ Download File From SharePoint
 
 # Getting token:
 \dontrun{
-gr <- create_graph_login() # Will trigger a login
+gr <- AzureGraph::create_graph_login() # Will trigger a login
 me <- gr$get_user("me")
-token <- me$token
-}
+token <- me$token}
 
 }
