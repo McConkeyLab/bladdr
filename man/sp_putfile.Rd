@@ -4,14 +4,16 @@
 \alias{sp_putfile}
 \title{Upload file to SharePoint}
 \usage{
-sp_putfile(file, dest_path, token, overwrite = F)
+sp_putfile(file, file_name, dest_path, token, overwrite = F)
 }
 \arguments{
 \item{file}{path to file to be uploaded}
 
+\item{file_name}{desired file name (with extension). Will be checked for uniqueness if overwrite = F}
+
 \item{dest_path}{path to folder on SharePoint where file is to be uploaded}
 
-\item{token}{AzureGraph token - see example.}
+\item{token}{AzureGraph token - see example}
 
 \item{overwrite}{should the file overwrite that of one with a similar (see Details) name if it exists?}
 }
