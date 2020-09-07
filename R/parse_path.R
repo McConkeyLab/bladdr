@@ -20,7 +20,10 @@ parse_path <- function(path) {
         drive_ind <- regexpr(paste0("(?<=", site, "/)", "[^/]*"), path, perl = T)
         drive     <- regmatches(path, drive_ind)
 
-        list(host = host, site = site, drive = drive)
+        rest_ind  <- regexpr(paste0("(?<=", drive, "/)", ".*$"), path, perl = T)
+        rest      <- regmatches(path, rest_ind)
+
+        list(host = host, site = site, drive = drive, rest = rest)
 
 }
 

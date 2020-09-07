@@ -20,7 +20,8 @@ Imports:
     rlang,
     tidyr,
     AzureGraph,
-    httr
+    httr,
+    mime
 Suggests: 
     knitr,
     rmarkdown
