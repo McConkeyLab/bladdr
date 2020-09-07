@@ -2,27 +2,29 @@
 % Please edit documentation in R/sp_getfile.R
 \name{sp_getfile}
 \alias{sp_getfile}
-\title{Download File From SharePoint}
+\title{Download file from SharePoint}
 \usage{
 sp_getfile(path, token)
 }
 \arguments{
 \item{path}{a character vector. Obtained by going online to SharePoint, right clicking on file, clicking 'details', clicking 'more details' in the resultant side pane, then clicking the 'copy' button right next to the "Path" header.}
 
-\item{token}{an AzureGraph token. See Examples.}
+\item{token}{an AzureGraph token - see example.}
 }
 \value{
 a tempfile path pointing to the location of the file downloaded
 }
 \description{
-Download File From SharePoint
+Download file from SharePoint
 }
 \examples{
 
 # Getting token:
 \dontrun{
+
 gr <- AzureGraph::create_graph_login() # Will trigger a login
 me <- gr$get_user("me")
-token <- me$token}
+token <- me$token
+}
 
 }
