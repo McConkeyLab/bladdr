@@ -1,0 +1,27 @@
+---
+title: "Working with SharePoint files"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Working with SharePoint files}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+# Introduction
+
+Data can make sense individually without making sense in the larger scope of their environment. This is frequently the case for plots we typically present: they make sense as to what they mean (the good ones, at least), but to a naive viewer their origins are often completely unknown. This makes reproducibility difficult.
+
+With the implementation of R, a script can document what data is taken in and what outputs are generated. However, there are some caveats: data are typically stored locally (which makes it difficult to collaborate, and space is often limited) or on GitHub (file size limits, not HIPAA compliant). Since not all files can be put on GitHub due to size and legal limitations, we run into the issue of 'data fragmentation' - some data here, some data there - and it becomes increasingly difficult to find data in the clutter and having to search both databases.
+
+To this end I have created a set of `sharepoint_*` functions that allow down and uploading of files from the SharePoint. Not only are files no longer limited by filesize or content, but their outputs are able to report the sourcecode from whence they came through file metadata. Futhermore, the files downloaded can be chosen to be kept temporary and will only take up disk space for as much time as needed, removing some burden from the client computer.
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(bladdr)
+```

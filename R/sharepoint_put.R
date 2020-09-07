@@ -22,7 +22,7 @@
 #' me <- gr$get_user("me")
 #' token <- me$token
 #' }
-sp_putfile <- function(file, file_name, dest_path, token, overwrite = F) {
+sharepoint_put <- function(file, file_name, dest_path, token, overwrite = F) {
 
         base_url <- "https://graph.microsoft.com/v1.0/sites/"
 

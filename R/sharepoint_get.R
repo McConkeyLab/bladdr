@@ -16,7 +16,7 @@
 #' token <- me$token
 #' }
 #'
-sp_getfile <- function(path, token) {
+sharepoint_get <- function(path, token) {
 
         tmp    <- tempfile()
         parsed <- parse_path(path)
