@@ -98,12 +98,11 @@ Note that I've saved this file to a temporary directory. This isn't strictly nec
 
 To upload to SharePoint, we get the path to the FOLDER we want it in, much like we did when we got the path of the FILE we wanted.
 
-```{r sharepoint_put, results = 'hide'}
-sharepoint_put(file = file.path(tempdir(), "my_plot.png"), 
-               file_name = "very_special_plot.png", 
+```{r sharepoint_put, eval = F}
+sharepoint_put(file = file.path(tempdir(), "my_plot.png"),
                dest_path = "https://livejohnshopkins.sharepoint.com/sites/GBCIStorage/Shared%20Documents/Raw%20Data/qPCR/aragaki-kai/2020-08-14", 
                token = token, 
                overwrite = F)
 ```
 
-We can rename the file as we see fit, but remember to include the file extension. Ensure that your file name extensions match - if they don't there will likely be unexpected consequences!
+We can rename the file as we see fit with the `file_name` argument, but remember to include the file extension. Ensure that your file name extensions match - if they don't there will be unexpected consequences!

@@ -22,7 +22,7 @@
 #' me <- gr$get_user("me")
 #' token <- me$token
 #' }
-sharepoint_put <- function(file, file_name, dest_path, token, overwrite = F) {
+sharepoint_put <- function(file, file_name = NULL, dest_path, token, overwrite = F) {
 
         base_url <- "https://graph.microsoft.com/v1.0/sites/"
 
@@ -30,15 +30,22 @@ sharepoint_put <- function(file, file_name, dest_path, token, overwrite = F) {
         ext_file_ind <- regexpr("\\..[^\\.]*$", file, perl = T)
         ext_file     <- regmatches(file, ext_file_ind)
 
+        if (!is.null(file_name)) {
+                # Get file_name extension
+                ext_file_name_ind <- regexpr("\\..[^\\.]*$", file_name, perl = T)
+                ext_file_name     <- regmatches(file_name, ext_file_name_ind)
 
-        # Get file_name extension
-        ext_file_name_ind <- regexpr("\\..[^\\.]*$", file_name, perl = T)
-        ext_file_name     <- regmatches(file_name, ext_file_name_ind)
 
+                # If extensions do not match, warn
+                if (ext_file != ext_file_name) {
+                        warning("\nExtensions do not match. \n file:      ", ext_file, "\n file_name: ", ext_file_name)
+                }
+        }
 
-        # If extensions do not match, warn
-        if (ext_file != ext_file_name) {
-                warning("\nExtensions do not match. \n file:      ", ext_file, "\n file_name: ", ext_file_name)
+        else {
+                file_name_ind <- regexpr("[^/]*\\..[^\\.]*$", file, perl = T)
+                file_name     <- regmatches(file, file_name_ind)
+                ext_file_name <- ext_file
         }
 
         # Parse destination filepath
@@ -49,9 +56,6 @@ sharepoint_put <- function(file, file_name, dest_path, token, overwrite = F) {
         url    <- paste0(base_url, parsed$host, ":/sites/", parsed$site)
         sp     <- AzureGraph::call_graph_url(token, url, http_verb = "GET")
         sp_id  <- sp$id
-
-        # Get drive ID
-
 
 
         # Get destination folder ID
@@ -78,20 +82,28 @@ sharepoint_put <- function(file, file_name, dest_path, token, overwrite = F) {
         # Upload file
         url <- paste0(base_url, sp_id, "/drive/items/", folder_id,":/", file_name, ":/content")
         res <- AzureGraph::call_graph_url(token,
-                                   url,
-                                   body      = httr::upload_file(file),
-                                   encode    = mime::guess_type(ext_file_name),
-                                   http_verb = "PUT")
+                                          url,
+                                          body      = httr::upload_file(file),
+                                          encode    = mime::guess_type(ext_file_name),
+                                          http_verb = "PUT")
 
-
-        # Attach script called in
-        url  <- paste0("https://graph.microsoft.com/v1.0/drives/", res$parentReference$driveId, "/items/", res$id, "/listitem/fields")
+        # Upload the filename which it was called from into source_code column
         script <- get_current_script()
-        body <- jsonlite::toJSON(list(source_code = script), pretty = T, auto_unbox = T)
-        AzureGraph::call_graph_url(token = token,
-                                   url = url,
-                                   body = body,
-                                   encode = "raw",
-                                   http_verb = "PATCH")
+        if (identical(script, character(0))) {
+                message("Couldn't find the script name.\nIs the file 'untitled'?")
+        }
+        else {
+                url  <- paste0("https://graph.microsoft.com/v1.0/drives/", res$parentReference$driveId, "/items/", res$id, "/listitem/fields")
+                body <- jsonlite::toJSON(list(source_code = script), pretty = T, auto_unbox = T)
+                res <- AzureGraph::call_graph_url(token = token,
+                                                  url = url,
+                                                  body = body,
+                                                  encode = "raw",
+                                                  http_verb = "PATCH")
+        }
+
+
+
+
 }
 

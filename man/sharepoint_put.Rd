@@ -4,7 +4,7 @@
 \alias{sharepoint_put}
 \title{Upload file to SharePoint}
 \usage{
-sharepoint_put(file, file_name, dest_path, token, overwrite = F)
+sharepoint_put(file, file_name = NULL, dest_path, token, overwrite = F)
 }
 \arguments{
 \item{file}{path to file to be uploaded}
