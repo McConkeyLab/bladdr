@@ -15,7 +15,6 @@ knitr::opts_chunk$set(
   fig.height=4, 
   out.width="100%", 
   dpi = 200
-  
 )
 ```
 
@@ -26,6 +25,7 @@ Data can make sense individually without making sense in the larger scope of the
 With the implementation of R, a script can document what data is taken in and what outputs are generated. However, there are some caveats: data are typically stored locally (which makes it difficult to collaborate, and space is often limited) or on GitHub (file size limits, not HIPAA compliant). Since not all files can be put on GitHub due to size and legal limitations, we run into the issue of 'data fragmentation' - some data here, some data there - and it becomes increasingly difficult to find data in the clutter and having to search both databases.
 
 To this end I have created a set of `sharepoint_*` functions that allow down and uploading of files from the SharePoint. Not only are files no longer limited by filesize or content, but their outputs automatically report the sourcecode from whence they came through file metadata. Furthermore, the files downloaded can be chosen to be kept temporary and will only take up disk space for as much time as needed, removing some burden from the client computer.
+
 
 # Packages Required
 
@@ -78,7 +78,7 @@ pcr <- pcr_tidy(local_pcr_path)
 pcr
 ```
 
-Let's say we wanted to make a plot. Simple enough:
+Let's say we wanted to make a plot:
 
 ```{r plot_pcr}
 plot <- pcr_plot(pcr)
@@ -91,7 +91,12 @@ And we love this plot so much that we want to save it:
 ggsave(filename = "my_plot.png", path = tempdir(), width = 8, height = 6)
 ```
 
-Now to upload it to the SharePoint, we get the path to the FOLDER we want it in, much like we did when we got the path of the FILE we wanted.
+Note that I've saved this file to a temporary directory. This isn't strictly necessary, but since I'll be uploading the file to SharePoint and the script is reproducible, it makes sense not to save it locally as well as on SharePoint.
+
+
+# Uploading a file to SharePoint
+
+To upload to SharePoint, we get the path to the FOLDER we want it in, much like we did when we got the path of the FILE we wanted.
 
 ```{r sharepoint_put, results = 'hide'}
 sharepoint_put(file = file.path(tempdir(), "my_plot.png"), 
@@ -101,4 +106,4 @@ sharepoint_put(file = file.path(tempdir(), "my_plot.png"),
                overwrite = F)
 ```
 
-And it's done!
+We can rename the file as we see fit, but remember to include the file extension. Ensure that your file name extensions match - if they don't there will likely be unexpected consequences!
