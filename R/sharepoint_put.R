@@ -3,7 +3,7 @@
 #' @param file path to file to be uploaded
 #' @param file_name desired file name (with extension). Will be checked for uniqueness if overwrite = F
 #' @param dest_path path to folder on SharePoint where file is to be uploaded
-#' @param token AzureGraph token - see example
+#' @param token AzureGraph token - see `sharepoint_token`
 #' @param overwrite should the file overwrite that of one with a similar (see Details) name if it exists?
 #'
 #' @return an http response
@@ -12,16 +12,9 @@
 #' @details
 #' SharePoint API does not care about upper versus lower case.
 #' As a matter of good practice, names should be distinct beyond just capitalization.
-#'
-#' @examples
-#'
-#' # Getting token:
-#' \dontrun{
-#'
-#' gr <- AzureGraph::create_graph_login() # Will trigger a login
-#' me <- gr$get_user("me")
-#' token <- me$token
-#' }
+#
+#' See the 'working-with-sharepoint-files.Rmd vignette for more details
+
 sharepoint_put <- function(file, file_name = NULL, dest_path, token, overwrite = F) {
 
         base_url <- "https://graph.microsoft.com/v1.0/sites/"

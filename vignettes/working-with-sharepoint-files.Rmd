@@ -30,10 +30,14 @@ To this end I have created a set of `sharepoint_*` functions that allow down and
 # Packages Required
 
 ```{r load_packages, message = F}
-library(AzureGraph) # For getting token
 library(bladdr)
 library(ggplot2)
 ```
+
+```{r knitr_packages, echo = F}
+library(AzureAuth)
+```
+
 
 
 # Introducing yourself to SharePoint
@@ -41,9 +45,7 @@ library(ggplot2)
 To let SharePoint know you have the proper credentials to be accessing a given file, you need to generate a 'token' by triggering a login in your browser:
 
 ```{r get_token, eval = F}
-gr    <- create_graph_login()
-me    <- gr$get_user("me")
-token <- me$token
+token <- sharepoint_token()
 ```
 
 ```{r get_token_knitr, echo = F, message = F}
