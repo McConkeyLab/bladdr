@@ -7,21 +7,98 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width=6, 
+  fig.height=4, 
+  out.width="100%", 
+  dpi = 200
+  
+)
+```
+
 # Introduction
 
 Data can make sense individually without making sense in the larger scope of their environment. This is frequently the case for plots we typically present: they make sense as to what they mean (the good ones, at least), but to a naive viewer their origins are often completely unknown. This makes reproducibility difficult.
 
 With the implementation of R, a script can document what data is taken in and what outputs are generated. However, there are some caveats: data are typically stored locally (which makes it difficult to collaborate, and space is often limited) or on GitHub (file size limits, not HIPAA compliant). Since not all files can be put on GitHub due to size and legal limitations, we run into the issue of 'data fragmentation' - some data here, some data there - and it becomes increasingly difficult to find data in the clutter and having to search both databases.
 
-To this end I have created a set of `sharepoint_*` functions that allow down and uploading of files from the SharePoint. Not only are files no longer limited by filesize or content, but their outputs are able to report the sourcecode from whence they came through file metadata. Furthermore, the files downloaded can be chosen to be kept temporary and will only take up disk space for as much time as needed, removing some burden from the client computer.
+To this end I have created a set of `sharepoint_*` functions that allow down and uploading of files from the SharePoint. Not only are files no longer limited by filesize or content, but their outputs automatically report the sourcecode from whence they came through file metadata. Furthermore, the files downloaded can be chosen to be kept temporary and will only take up disk space for as much time as needed, removing some burden from the client computer.
 
-```{r, include = FALSE}
-knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>"
-)
-```
+# Packages Required
 
-```{r setup}
+```{r load_packages, message = F}
+library(AzureGraph) # For getting token
 library(bladdr)
+library(ggplot2)
 ```
+
+
+# Introducing yourself to SharePoint
+
+To let SharePoint know you have the proper credentials to be accessing a given file, you need to generate a 'token' by triggering a login in your browser:
+
+```{r get_token, eval = F}
+gr    <- create_graph_login()
+me    <- gr$get_user("me")
+token <- me$token
+```
+
+```{r get_token_knitr, echo = F, message = F}
+gr    <- get_graph_login()
+me    <- gr$get_user("me")
+token <- me$token
+```
+
+
+# Downloading a file from SharePoint
+
+To download a file, first go the the SharePoint website and find the file of interest. Right click the file, then click "Details". A pane will appear on the right. Scroll down on that pane or click "More details" on the bottom. Next to the "Path" heading, click the icon that looks like two sheets of paper. This will copy the path of the file that we want. For me, that path looks like this:
+
+```{r my_path, echo = F}
+sharepoint_pcr_path <- "https://livejohnshopkins.sharepoint.com/sites/GBCIStorage/Shared%20Documents/Raw%20Data/qPCR/aragaki-kai/2020-08-14/2020-08-14%20uc6_sar-bos-gal_2.xls"
+```
+
+Now we can get our file with `sharepoint_get`:
+
+```{r get_file}
+local_pcr_path <- sharepoint_get(path  = sharepoint_pcr_path,
+                                 token = token)
+local_pcr_path
+```
+
+You'll note that `sharepoint_get` returns a path. That's a path to a temporary file. It contains your data exactly as normal, it's just in a file that will delete after the R session is over.
+
+We can pipe this directly into our favorite reading function. Since this is a pcr file, I'm going to use our handy `pcr_tidy` function to read it in (which takes a file path as its first argument)
+
+```{r read_file}
+pcr <- pcr_tidy(local_pcr_path)
+pcr
+```
+
+Let's say we wanted to make a plot. Simple enough:
+
+```{r plot_pcr}
+plot <- pcr_plot(pcr)
+plot
+```
+
+And we love this plot so much that we want to save it:
+
+```{r save_plot}
+ggsave(filename = "my_plot.png", path = tempdir(), width = 8, height = 6)
+```
+
+Now to upload it to the SharePoint, we get the path to the FOLDER we want it in, much like we did when we got the path of the FILE we wanted.
+
+```{r sharepoint_put, results = 'hide'}
+sharepoint_put(file = file.path(tempdir(), "my_plot.png"), 
+               file_name = "very_special_plot.png", 
+               dest_path = "https://livejohnshopkins.sharepoint.com/sites/GBCIStorage/Shared%20Documents/Raw%20Data/qPCR/aragaki-kai/2020-08-14", 
+               token = token, 
+               overwrite = F)
+```
+
+And it's done!
