@@ -36,7 +36,7 @@ volcano_plot <- function(results, pval = 0.05, lfc = 0) {
                 ggplot2::ylab("-log10(P-adj)") +
                 ggplot2::xlab("Log2 Fold Change") +
                 ggplot2::geom_hline(yintercept = -log10(pval), linetype = "dashed") +
-                ggplot2::geom_vline(xintercept = lfc, linetype = "dashed") +
+                ggplot2::geom_vline(xintercept =  lfc, linetype = "dashed") +
                 ggplot2::geom_vline(xintercept = -lfc, linetype = "dashed") +
                 ggplot2::theme(legend.position = "none")
 
