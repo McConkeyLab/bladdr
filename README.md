@@ -6,7 +6,7 @@ bladdr's vision is to be a package that can automate everyday days in small func
 
 ## Reproducibility
 
-Any output of these functions should produce a report with all relevant information.
+Human GUI interaction should be minimized to prevent undocumented variables. Documentation should be automatic when possible - realistically, if something is a hassle to do it will likely not be done. 
 
 ## Clarity
 
