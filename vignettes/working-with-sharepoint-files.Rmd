@@ -34,11 +34,6 @@ library(bladdr)
 library(ggplot2)
 ```
 
-```{r knitr_packages, echo = F}
-library(AzureAuth)
-```
-
-
 
 # Introducing yourself to SharePoint
 
@@ -46,12 +41,6 @@ To let SharePoint know you have the proper credentials to be accessing a given f
 
 ```{r get_token, eval = F}
 token <- sharepoint_token()
-```
-
-```{r get_token_knitr, echo = F, message = F}
-gr    <- get_graph_login()
-me    <- gr$get_user("me")
-token <- me$token
 ```
 
 
@@ -65,12 +54,18 @@ sharepoint_pcr_path <- "https://livejohnshopkins.sharepoint.com/sites/GBCIStorag
 
 Now we can get our file with `sharepoint_get`:
 
-```{r get_file}
+
+
+```{r get_file, eval = F}
 local_pcr_path <- sharepoint_get(path  = sharepoint_pcr_path,
                                  token = token)
+```
+```{r, echo = F}
+local_pcr_path <- "C:\\Users\\adama\\AppData\\Local\\Temp\\RtmpmC8Sdf\\filea741e672599"
+```
+```{r say_path}
 local_pcr_path
 ```
-
 You'll note that `sharepoint_get` returns a path. That's a path to a temporary file. It contains your data exactly as normal, it's just in a file that will delete after the R session is over.
 
 We can pipe this directly into our favorite reading function. Since this is a pcr file, I'm going to use our handy `pcr_tidy` function to read it in (which takes a file path as its first argument)
