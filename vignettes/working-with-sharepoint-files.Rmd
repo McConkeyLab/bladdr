@@ -66,6 +66,10 @@ local_pcr_path <- "C:\\Users\\adama\\AppData\\Local\\Temp\\RtmpmC8Sdf\\filea741e
 ```{r say_path}
 local_pcr_path
 ```
+
+```{r, echo = F}
+local_pcr_path <- "../inst/extdata/untidy-pcr-example-2.xlsx"
+```
 You'll note that `sharepoint_get` returns a path. That's a path to a temporary file. It contains your data exactly as normal, it's just in a file that will delete after the R session is over.
 
 We can pipe this directly into our favorite reading function. Since this is a pcr file, I'm going to use our handy `pcr_tidy` function to read it in (which takes a file path as its first argument)
