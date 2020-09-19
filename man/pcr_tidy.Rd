@@ -7,14 +7,14 @@
 pcr_tidy(file_path = NULL)
 }
 \arguments{
-\item{file_path}{Path to an excel file containing the results of a ddCT qPCR
+\item{file_path}{Path to an excel file containing the results of a qPCR
 run. If left blank, will open up interactive file chooser.}
 }
 \value{
 Tidy results dataframe
 }
 \description{
-Takes in a fresh results output from ddCT qPCR and converts it into a tidy
+Takes in a fresh results output from qPCR and converts it into a tidy
 format. Useful for downstream analyses.
 }
 \examples{

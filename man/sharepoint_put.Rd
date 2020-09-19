@@ -13,7 +13,7 @@ sharepoint_put(file, file_name = NULL, dest_path, token, overwrite = F)
 
 \item{dest_path}{path to folder on SharePoint where file is to be uploaded}
 
-\item{token}{AzureGraph token - see example}
+\item{token}{AzureGraph token - see \code{sharepoint_token}}
 
 \item{overwrite}{should the file overwrite that of one with a similar (see Details) name if it exists?}
 }
@@ -26,14 +26,5 @@ Upload file to SharePoint
 \details{
 SharePoint API does not care about upper versus lower case.
 As a matter of good practice, names should be distinct beyond just capitalization.
-}
-\examples{
-
-# Getting token:
-\dontrun{
-
-gr <- AzureGraph::create_graph_login() # Will trigger a login
-me <- gr$get_user("me")
-token <- me$token
-}
+See the 'working-with-sharepoint-files.Rmd vignette for more details
 }

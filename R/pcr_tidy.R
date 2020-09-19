@@ -30,16 +30,17 @@ pcr_tidy <- function(file_path = NULL) {
 
         dat_og <- readxl::read_excel(file_path, sheet = "Results")
 
-        exp_type <- dat_og[which(dat_og$`Block Type`=="Experiment Type"),2]
+        exp_type <- substr(dat_og[which(dat_og$`Block Type`=="Experiment Type"),2], 0, 4)
+
 
 
         ind_start <- which(dat_og[,1] == "Well")
 
-        if (exp_type == "Standard Curve") {
+        if (exp_type == "Stan") {
                 ind_end <- nrow(dat_og)
                 dat <- dat_og[ind_start:ind_end,]
         }
-        if (exp_type == "Comparative Cт (ΔΔCт) ") {
+        if (exp_type == "Comp") {
                 ind_end <- which(dat_og[,1] == "Analysis Type")
                 exp_dat <- dat_og[ind_end:nrow(dat_og), 1:2] %>%
                         t()
@@ -50,7 +51,6 @@ pcr_tidy <- function(file_path = NULL) {
                 dat <- dat_og[-c(1:(ind_start-1), (ind_end-1):nrow(dat_og)),]
         }
 
-        dat <- dat_og[-c(1:(ind_start-1), (ind_end-1):nrow(dat_og)),]
         names <- gsub(" ", "_", dat[1,])
         names <- gsub("-", "_", names)
         names <- gsub("\\(superscript_2\\)", "2", names)
@@ -63,7 +63,7 @@ pcr_tidy <- function(file_path = NULL) {
                               well_col = as.numeric(stringr::str_extract(.data$well_position, "[:digit:]{1,2}$")),
                               well_row = as.numeric(factor(.data$well_row, levels = LETTERS)))
 
-        if (exp_type == "Comparative Cт (ΔΔCт) ") {
+        if (exp_type == "Comp") {
                 dat$analysis_type <- exp_dat$Analysis.Type
                 dat$control <- exp_dat$Endogenous.Control
                 dat$conf_int <- exp_dat$RQ.Min.Max.Confidence.Level
@@ -71,7 +71,7 @@ pcr_tidy <- function(file_path = NULL) {
         }
 
         dat$plate_type <- colnames(dat_og)[2]
-        dat$exp_type <- exp_type[[1]]
+        dat$exp_type <- tolower(exp_type[[1]])
 
         dat
 }
