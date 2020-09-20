@@ -29,7 +29,7 @@ volcano_plot <- function(results, pval = 0.05, lfc = 0) {
                                       abs(.data$LFC) > lfc ~ "lfc",
                                       TRUE ~ "neither"),
                               is_sig = dplyr::if_else(.data$p_val < pval, "Significant", "Non-Significant"),
-                       lfc_cutoff = dplyr::if_else(abs(.data$LFC) > lfc, "Met", "Unmet"))
+                              lfc_cutoff = dplyr::if_else(abs(.data$LFC) > lfc, "Met", "Unmet"))
 
         ggplot2::ggplot(volcano_data, ggplot2::aes(x = .data$LFC, y = .data$neg_log_p, color = .data$color)) +
                 ggplot2::geom_point(size = 2, alpha = 1) +
