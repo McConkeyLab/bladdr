@@ -12,28 +12,22 @@
 #'
 #' dat_path <- system.file("extdata", "untidy-standard-curve.xlsx", package = "bladdr")
 #'
-#' a <- pcr_tidy(dat_path) %>%
+#' pcr_tidy(dat_path) %>%
 #' pcr_lib_calc()
-#'
+
 pcr_lib_calc <- function(tidy_pcr, dil_factor = 1000) {
 
-        standards <- tidy_pcr %>%
-                dplyr::filter(.data$task == "STANDARD") %>%
-                tidyr::nest(replicates = c(well, well_position, ct, well_row, well_col)) %>%
-                dplyr::group_by(task) %>%
-                dplyr::mutate(standard_diff = ct_mean - dplyr::lag(ct_mean, default = ct_mean[1]))
-                # dplyr::group_by(.data$quantity) %>%
-                # dplyr::arrange(.data$ct_mean) %>%
-                # dplyr::group_by(.data$quantity, .data$ct_mean) %>%
-                # dplyr::mutate(standard_diff = .data$ct_mean - dplyr::lag(.data$ct_mean))
-                # dplyr::mutate(dil = 2^.data$standard_diff)
-
-        # samples <- tidy_pcr %>%
-        #         dplyr::filter(.data$task == "UNKNOWN") %>%
-        #         dplyr::group_by(.data$sample_name) %>%
-        #         dplyr::summarize(ct_mean = mean(.data$ct),
-        #                          quantity_mean = mean(.data$quantity),
-        #                          concentration = .data$quantity_mean * dil_factor)
-        #
-        # output <- list(input = tidy_pcr, standards = standards, samples = samples)
+        tidy_pcr %>%
+                tidyr::nest(replicates = c(.data$well, .data$well_position, .data$ct, .data$well_row, .data$well_col)) %>%
+                dplyr::group_by(.data$task) %>%
+                dplyr::arrange(.data$ct_mean) %>%
+                dplyr::mutate(standard_diff = .data$ct_mean - dplyr::lag(.data$ct_mean, default = .data$ct_mean[1]),
+                              dil = 2^.data$standard_diff,
+                              quant_actual = 6.8/cumprod(.data$dil),
+                              dil = dplyr::if_else(.data$dil == 1, 0, .data$dil)) %>%
+                tidyr::unnest(cols = .data$replicates) %>%
+                dplyr::mutate(dil = dplyr::if_else(.data$task == "STANDARD", .data$dil, NA_real_),
+                              standard_diff = dplyr::if_else(.data$task == "STANDARD", .data$standard_diff, NA_real_),
+                              quant_actual = dplyr::if_else(.data$task == "STANDARD", .data$quant_actual, .data$quantity),
+                              concentration = .data$quantity_mean * dil_factor)
 }

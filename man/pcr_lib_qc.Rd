@@ -2,18 +2,18 @@
 % Please edit documentation in R/pcr_lib_qc.R
 \name{pcr_lib_qc}
 \alias{pcr_lib_qc}
-\title{Title}
+\title{Generate visual library prep pcr quality control}
 \usage{
 pcr_lib_qc(lib_calc_pcr)
 }
 \arguments{
-\item{libcalc_pcr}{}
+\item{lib_calc_pcr}{an output from \code{pcr_lib_calc}}
 }
 \value{
-
+a ggplot
 }
 \description{
-Title
+Generate visual library prep pcr quality control
 }
 \examples{
 
