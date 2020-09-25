@@ -2,7 +2,8 @@
 
 export("%>%")
 export(pcr_control)
-export(pcr_libcalc)
+export(pcr_lib_calc)
+export(pcr_lib_qc)
 export(pcr_plate_view)
 export(pcr_plot)
 export(pcr_rq)
