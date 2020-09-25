@@ -21,7 +21,7 @@ Calculate library PCR concentrations
 
 dat_path <- system.file("extdata", "untidy-standard-curve.xlsx", package = "bladdr")
 
-pcr_tidy(dat_path) \%>\%
+a <- pcr_tidy(dat_path) \%>\%
 pcr_lib_calc()
 
 }

@@ -71,14 +71,26 @@ sharepoint_put <- function(file, file_name = NULL, dest_path, token, overwrite =
                 if (nrow(response) > 0) stop("\nFile already exists in destination. \nChange filename (case-INsensitive) or set overwrite to TRUE")
         }
 
-
         # Upload file
-        url <- paste0(base_url, sp_id, "/drive/items/", folder_id,":/", file_name, ":/content")
-        res <- AzureGraph::call_graph_url(token,
-                                          url,
-                                          body      = httr::upload_file(file),
-                                          encode    = mime::guess_type(ext_file_name),
-                                          http_verb = "PUT")
+        if(file.size(file) <= 3900000) {
+                url <- paste0(base_url, sp_id, "/drive/items/", folder_id,":/", file_name, ":/content")
+                res <- AzureGraph::call_graph_url(token,
+                                                  url,
+                                                  body      = httr::upload_file(file),
+                                                  encode    = mime::guess_type(ext_file_name),
+                                                  http_verb = "PUT")
+        } else if (file.size(file) > 3900000) {
+                url <- paste0(base_url, sp_id, "/drive/items/", folder_id, ":/", file_name, ":/createUploadSession")
+                res <- AzureGraph::call_graph_url(token,
+                                                  url = url,
+                                                  http_verb = "POST")
+                res <- AzureGraph::call_graph_url(token,
+                                                  url = res$uploadUrl,
+                                                  config = httr::add_headers(.headers = c(`Content-Range` = paste0("bytes 0-",file.size(file)-1,"/",file.size(file)))),
+                                                  body      = httr::upload_file(file),
+                                                  encode    = mime::guess_type(ext_file_name),
+                                                  http_verb = "PUT")
+        }
 
         # Upload the filename which it was called from into source_code column
         script <- get_current_script()
@@ -94,9 +106,6 @@ sharepoint_put <- function(file, file_name = NULL, dest_path, token, overwrite =
                                                   encode = "raw",
                                                   http_verb = "PATCH")
         }
-
-
-
 
 }
 

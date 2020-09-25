@@ -7,11 +7,11 @@
 #'
 #' @examples
 #'
-dat_path <- system.file("extdata", "untidy-standard-curve.xlsx", package = "bladdr")
-
-pcr_tidy(dat_path) %>%
-        pcr_lib_calc() %>%
-        pcr_lib_qc()
+#' dat_path <- system.file("extdata", "untidy-standard-curve.xlsx", package = "bladdr")
+#'
+#' pcr_tidy(dat_path) %>%
+#'         pcr_lib_calc() %>%
+#'         pcr_lib_qc()
 pcr_lib_qc <- function(lib_calc_pcr) {
 
         standards <- lib_calc_pcr$standards %>%

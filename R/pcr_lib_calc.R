@@ -10,10 +10,10 @@
 #'
 #' @examples
 #'
-dat_path <- system.file("extdata", "untidy-standard-curve.xlsx", package = "bladdr")
-
-a <- pcr_tidy(dat_path) %>%
-pcr_lib_calc()
+#' dat_path <- system.file("extdata", "untidy-standard-curve.xlsx", package = "bladdr")
+#'
+#' a <- pcr_tidy(dat_path) %>%
+#' pcr_lib_calc()
 #'
 pcr_lib_calc <- function(tidy_pcr, dil_factor = 1000) {
 
