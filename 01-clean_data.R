@@ -29,6 +29,10 @@ remove_first_duplicates <- function(data) {
         end_data
 }
 
+remove_duplicates <- function(data) {
+        data[!duplicated(data$sample),]
+}
+
 
 # Allegheny Aim 1 ---------------------------------------------------------
 a1 <- read_excel("./b_datasets/a1-lib_prep.xlsx",
@@ -57,14 +61,9 @@ a1 <- mutate(a1, input_rna = case_when(find == T ~ "undiluted",
              success = sub("MAYBE", "M", success),
              success = sub("weird", NA, success))
 
-## need to remove duplicated samples - keeping the last one that was done
-## duplicated only marks 2nd duplicate as a duplicate, this dataset is in the
-## order that the library preps were done
 
+a1 <- remove_duplicates(a1)
 
-a1 <- remove_first_duplicates(a1) %>% remove_first_duplicates(.)
-## 117 unique observations
-## all duplicates removed - only keeping LAST library made.
 
 
 # Allegheny Aim 2 ---------------------------------------------------------
@@ -83,8 +82,9 @@ a2 <- a2 %>% mutate(., tech = "bridget",
                input_rna = case_when(find == T ~ "undiluted",
                                        TRUE ~ as.character(input_rna)))
 
-a2 <- remove_first_duplicates(a2) %>% remove_first_duplicates(.)
+a2_1 <- remove_duplicates(a2)
 ## 266 unique observations
+
 
 # ADAPT-BLADDER -----------------------------------------------------------
 ab <- read_excel("./b_datasets/ab-lib_prep.xlsx",
@@ -133,7 +133,7 @@ gbci <- gbci %>% mutate(kit = "roche",
                                        TRUE ~ as.character(input_rna)))
 
 
-gbci <- remove_first_duplicates(gbci)
+gbci <- remove_duplicates(gbci)
 ## 23 unique observations
 
 
@@ -174,7 +174,7 @@ cs <- cs %>% mutate(.,kit = "roche",
                success = sub("MAYBE/Y|MAYBE", "M", success),
                dv200 = dv200/100)
 
-cs <- remove_first_duplicates(cs) %>% remove_first_duplicates(.)
+cs <- remove_duplicates(cs)
 ## 49 unique observations - cores that were isolated alone (A,B, etc)
 ## and then the patients that were combined should count as separate
 ## samples (since they kind of are)
@@ -208,7 +208,7 @@ msk_roche <- msk_roche[, c(2, 3, 4, 5, 6, 7, 8, 11)] %>%
                project = "msk",
                input_rna = c(rep(20, 20), rep(5, 8), rep(10, 8), rep(20,3)))
 
-msk_roche <- remove_first_duplicates(msk_roche)
+msk_roche <- remove_duplicates(msk_roche)
 
 
 
@@ -253,8 +253,7 @@ msk_qiagen <- msk_qiagen[!find,]
 ## removing all samples that were speed-vacced
 
 
-msk_qiagen <- remove_first_duplicates(msk_qiagen) %>%
-        remove_first_duplicates(.) %>% remove_first_duplicates(.)
+msk_qiagen <- remove_duplicates(msk_qiagen)
 
 msk_qiagen <- select(msk_qiagen, !c(id, type))
 
@@ -288,7 +287,7 @@ eva_roche <- eva_roche %>% mutate(., kit = "roche",
                project = "eva_roche",
                success = sub("MAYBE", "M", success))
 
-eva_roche <- remove_first_duplicates(eva_roche) %>% remove_first_duplicates(.)
+eva_roche <- remove_duplicates(eva_roche)
 
 
 # Eva Qiagen --------------------------------------------------------------
@@ -309,8 +308,7 @@ eva_qiagen <- eva_qiagen %>% mutate(., kit = "qiagen",
                input_rna = case_when(findh20 == T ~ "undiluted",
                                            TRUE ~ as.character(input_rna)))
 
-eva_qiagen <- remove_first_duplicates(eva_qiagen) %>%
-        remove_first_duplicates(.)
+eva_qiagen <- remove_duplicates(eva_qiagen)
 
 eva_qiagen <- select(eva_qiagen, !type)
 
@@ -334,7 +332,7 @@ eva_ne <- eva_ne %>%  mutate(., kit = NA,
                success = sub("No", "N", success),
                success = sub("Maybe", "M", success))
 
-eva_ne <- remove_first_duplicates(eva_ne)
+eva_ne <- remove_duplicates(eva_ne)
 
 eva_ne <- select(eva_ne, !type)
 
@@ -377,8 +375,7 @@ bcg <- bcg %>% mutate(., kit = "qiagen",
                success = sub("No", "N", success),
                conc_200 = NA)
 
-bcg <- remove_first_duplicates(bcg) %>% remove_first_duplicates(.) %>%
-        remove_first_duplicates(.) %>% remove_first_duplicates(.)
+bcg <- remove_duplicates(bcg)
 
 
 # All Together Now --------------------------------------------------------
@@ -401,14 +398,29 @@ complete_total <- total[complete.cases(total),]
 binary_complete <- complete_total[!complete_total$success == "M",]
 
 
+# Clean Up ----------------------------------------------------------------
+remove(a1, a2, ab, bcg, chemo, cis, cs, eva_ne, eva_qiagen, eva_roche, gbci,
+       msk_qiagen, msk_roche, scc, wc, find, findh20)
+
 # Create Train, Test, Validate --------------------------------------------
 ## want equal amounts of failed + succeeded for train dataset.
 ## NOT FINAL - JUST MESSING AROUND HERE.
 
 set.seed(100)
-train2 <- slice_sample(binary_complete, prop = 0.75) %>%
+
+train <- slice_sample(binary_complete, prop = 0.75) %>%
         mutate(., success_binary = case_when(success == "Y" ~ 1,
                                              success == "N" ~ 0))
+
+train_n <- binary_complete[binary_complete$success == "N",]
+set.seed(100)
+train_y <- binary_complete[!binary_complete$success == "N",] %>%
+        slice_sample(., n = nrow(train_n))
+train <- rbind(train_n, train_y) %>% slice_sample(., prop = 1.0) %>%
+        mutate(., success_binary = case_when(success == "Y" ~ 1,
+                                             success == "N" ~ 0))
+remove(train_n, train_y)
+
 
 
 
