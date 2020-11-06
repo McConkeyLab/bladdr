@@ -25,7 +25,8 @@ Imports:
     mime,
     here,
     jsonlite,
-    rstudioapi
+    rstudioapi,
+    tibble
 Suggests: 
     knitr,
     rmarkdown
