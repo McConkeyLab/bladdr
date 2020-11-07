@@ -22,5 +22,4 @@ View sample plating layout
 dat_path <- system.file("extdata", "untidy-pcr-example.xls", package = "bladdr") \%>\%
 pcr_tidy() \%>\%
 pcr_plate_view()
-
 }
