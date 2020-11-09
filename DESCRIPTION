@@ -20,12 +20,6 @@ Imports:
     DESeq2,
     rlang,
     tidyr,
-    AzureGraph,
-    httr,
-    mime,
-    here,
-    jsonlite,
-    rstudioapi,
     tibble
 Suggests: 
     knitr,
