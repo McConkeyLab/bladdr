@@ -5,6 +5,8 @@
 #' @return a ggplot
 #' @export
 #'
+#' @importFrom ggplot2 aes element_blank
+#'
 #' @examples
 #'
 #' dat_path <- system.file("extdata", "untidy-standard-curve.xlsx", package = "bladdr")
@@ -48,15 +50,15 @@ pcr_lib_qc <- function(lib_calc_pcr) {
                 dplyr::mutate(y = rep(c(1.1, 0.9, 1.1, 0.9), each = 2),
                               yend = rep(c(1.05, 0.95, 1.05, 0.95), each = 2))
 
-        ggplot2::ggplot(standard_summary, ggplot2::aes(x = 1/.data$value, y = 1, color = .data$name)) +
+        ggplot2::ggplot(standard_summary, aes(x = 1/.data$value, y = 1, color = .data$name)) +
                 ggplot2::geom_point(size = 10, alpha = 0.7) +
                 ggplot2::scale_color_manual(values = c("#00AAAA", "#222222")) +
-                ggplot2::geom_segment(data = dilution_lines, ggplot2::aes(x = .data$line_start, xend = .data$line_end, y = .data$y, yend = .data$y), size = 1) +
-                ggplot2::geom_segment(data = vert_lines, ggplot2::aes(x = .data$x, xend = .data$x, y = .data$y, yend = .data$yend), color = "#00AAAA", size = 1) +
-                ggplot2::geom_text(data = dilution_lines, ggplot2::aes(label = round(.data$dil, 1), y = .data$y_text, x = .data$mid), size = 8) +
+                ggplot2::geom_segment(data = dilution_lines, aes(x = .data$line_start, xend = .data$line_end, y = .data$y, yend = .data$y), size = 1) +
+                ggplot2::geom_segment(data = vert_lines, aes(x = .data$x, xend = .data$x, y = .data$y, yend = .data$yend), color = "#00AAAA", size = 1) +
+                ggplot2::geom_text(data = dilution_lines, aes(label = round(.data$dil, 1), y = .data$y_text, x = .data$mid), size = 8) +
                 ggplot2::scale_x_log10() +
                 ggplot2::theme_minimal() +
-                ggplot2::theme(panel.grid = ggplot2::element_blank(), axis.title = ggplot2::element_blank(), axis.text = ggplot2::element_blank(), legend.position = "none") +
+                ggplot2::theme(panel.grid = element_blank(), axis.title = element_blank(), axis.text = element_blank(), legend.position = "none") +
                 ggplot2::coord_cartesian(ylim = c(0.5, 1.5)) +
-                ggplot2::geom_point(data = sample_summary, ggplot2::aes(x = 1/.data$quantity_mean, y = 1), color = "red")
+                ggplot2::geom_point(data = sample_summary, aes(x = 1/.data$quantity_mean, y = 1), color = "red")
 }

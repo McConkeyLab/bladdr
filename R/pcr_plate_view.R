@@ -7,6 +7,7 @@
 #' @export
 #'
 #' @importFrom rlang .data
+#' @importFrom ggplot2 aes
 #'
 #' @examples
 #'
@@ -16,21 +17,16 @@
 
 pcr_plate_view <- function(tidy_pcr, fill = .data$target_name) {
         usr_fill <- substitute(fill)
-                if (sum(grepl("384", tidy_pcr$plate_type), na.rm = T) > 0) {
-                        ggplot2::ggplot(tidy_pcr, ggplot2::aes(x = .data$well_col, y = .data$well_row, fill = eval(usr_fill))) +
-                                ggplot2::geom_tile(ggplot2::aes(size = 2)) +
-                                ggplot2::coord_cartesian(xlim = c(1,24), ylim = c(16, 1)) +
-                                ggplot2::scale_y_continuous(breaks = 1:16, labels = LETTERS[1:16]) +
-                                ggplot2::scale_x_continuous(breaks = 1:24, minor_breaks = NULL) +
-                                ggplot2::labs(fill = deparse(usr_fill)) +
-                                ggplot2::guides(size = F)
-                } else if (sum(grepl("96", tidy_pcr$plate_type), na.rm = T) > 0) {
-                        ggplot2::ggplot(tidy_pcr, ggplot2::aes(x = .data$well_col, y = .data$well_row, fill = eval(usr_fill))) +
-                                ggplot2::geom_tile(ggplot2::aes(size = 2)) +
-                                ggplot2::coord_cartesian(xlim = c(1,12), ylim = c(8, 1)) +
-                                ggplot2::scale_y_continuous(breaks = 1:8, labels = LETTERS[1:8]) +
-                                ggplot2::scale_x_continuous(breaks = 1:12, minor_breaks = NULL) +
-                                ggplot2::labs(fill = deparse(usr_fill)) +
-                                ggplot2::guides(size = F)
-                        }
+        if (sum(grepl("384", tidy_pcr$plate_type), na.rm = T) > 0) {
+                x <- 2
+        } else if (sum(grepl("96", tidy_pcr$plate_type), na.rm = T) > 0) {
+                x <- 1
+        }
+        ggplot2::ggplot(tidy_pcr, aes(x = .data$well_col, y = .data$well_row, fill = eval(usr_fill))) +
+                ggplot2::geom_tile(aes(size = 2)) +
+                ggplot2::coord_cartesian(xlim = c(1,(x*12)), ylim = c((x*8), 1)) +
+                ggplot2::scale_y_continuous(breaks = 1:(x*8), labels = LETTERS[1:(x*8)]) +
+                ggplot2::scale_x_continuous(breaks = 1:(x*12), minor_breaks = NULL) +
+                ggplot2::labs(fill = deparse(usr_fill)) +
+                ggplot2::guides(size = F)
 }
