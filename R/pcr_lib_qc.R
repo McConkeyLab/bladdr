@@ -8,13 +8,13 @@
 #' @importFrom ggplot2 aes element_blank
 #'
 #' @examples
-#' \dontrun{
+#'
 #' dat_path <- system.file("extdata", "untidy-standard-curve.xlsx", package = "bladdr")
 #'
-#' lib_calc_pcr <- pcr_tidy(dat_path, pad_zero = T) %>%
+#' lib_calc_pcr <- pcr_tidy(dat_path, pad_zero = TRUE) %>%
 #'         pcr_lib_calc() %>%
 #'         pcr_lib_qc()
-#' }
+#'
 pcr_lib_qc <- function(lib_calc_pcr) {
         # Does mean(quantity) == quantity_mean?
         dat <- lib_calc_pcr %>%
@@ -135,7 +135,7 @@ pcr_lib_qc <- function(lib_calc_pcr) {
                 ggplot2::geom_point(color = "#00AAAA", size = 5) +
                 ggplot2::theme(axis.title = element_blank(), legend.position = "none", axis.text.x = ggplot2::element_text(angle = 90, vjust = 0.5))
 
-        report <- file.path("./inst/lib-qc.Rmd")
+        report <- system.file("lib-qc.Rmd", package = "bladdr")
         rmarkdown::render(report, params = list(stan = standards_plot, out = outliers_plot, samp = table_samples, conc = conc_plot, slope = slope_plot))
 }
 

@@ -16,11 +16,11 @@ a ggplot
 Generate visual library prep pcr quality control report
 }
 \examples{
-\dontrun{
+
 dat_path <- system.file("extdata", "untidy-standard-curve.xlsx", package = "bladdr")
 
-lib_calc_pcr <- pcr_tidy(dat_path, pad_zero = T) \%>\%
+lib_calc_pcr <- pcr_tidy(dat_path, pad_zero = TRUE) \%>\%
         pcr_lib_calc() \%>\%
         pcr_lib_qc()
-}
+
 }
