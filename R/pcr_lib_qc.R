@@ -124,7 +124,6 @@ pcr_lib_qc <- function(lib_calc_pcr) {
                 ggplot2::coord_cartesian(xlim = c(-11.5, 11.5), ylim = c(0.5, length(unique(outliers_plot_dat$sample_name)) + 0.5), expand = F) +
                 ggplot2::theme(panel.grid.major.x = element_blank(), axis.title.y = element_blank(), panel.grid.minor.x = element_blank(), legend.position = "none")
 
-
         table_samples <- sample_summary %>%
                 dplyr::select(-.data$quantity_mean) %>%
                 dplyr::rename("Sample Name" = .data$sample_name,
@@ -136,9 +135,8 @@ pcr_lib_qc <- function(lib_calc_pcr) {
                 ggplot2::theme(axis.title = element_blank(), legend.position = "none", axis.text.x = ggplot2::element_text(angle = 90, vjust = 0.5))
 
         report <- system.file("lib-qc.Rmd", package = "bladdr")
-        rmarkdown::render(report, params = list(stan = standards_plot, out = outliers_plot, samp = table_samples, conc = conc_plot, slope = slope_plot))
+        rmarkdown::render(report, output_dir = "./pcr_qc_reports", output_file = paste(Sys.time(), "report.html"), params = list(stan = standards_plot, out = outliers_plot, samp = table_samples, conc = conc_plot, slope = slope_plot))
 }
-
 
 find_mean <- function(df){
         if(nrow(df) >= 3 & !all(is.na(df$ct))) {
