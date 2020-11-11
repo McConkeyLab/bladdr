@@ -5,6 +5,7 @@
 #'
 #' @param file_path Path to an excel file containing the results of a qPCR
 #'   run. If left blank, will open up interactive file chooser.
+#' @param pad_zero Should a leading zero be added to "Sample 1" etc?
 #'
 #' @return Tidy results dataframe
 #' @export
@@ -22,7 +23,7 @@
 #' dat_clean <- pcr_tidy(dat_path)
 #' dat_clean[1:10]
 
-pcr_tidy <- function(file_path = NULL) {
+pcr_tidy <- function(file_path = NULL, pad_zero = F) {
 
         if (is.null(file_path)) {
                 file_path <- file.choose()
@@ -31,8 +32,6 @@ pcr_tidy <- function(file_path = NULL) {
         dat_og <- readxl::read_excel(file_path, sheet = "Results")
 
         exp_type <- substr(dat_og[which(dat_og$`Block Type`=="Experiment Type"),2], 0, 4)
-
-
 
         ind_start <- which(dat_og[,1] == "Well")
 
@@ -68,6 +67,10 @@ pcr_tidy <- function(file_path = NULL) {
                 dat$control <- exp_dat$Endogenous.Control
                 dat$conf_int <- exp_dat$RQ.Min.Max.Confidence.Level
                 dat$ref_samp <- exp_dat$Reference.Sample
+        }
+
+        if (pad_zero) {
+                dat$sample_name <- pad_zero(dat$sample_name)
         }
 
         dat$plate_type <- colnames(dat_og)[2]

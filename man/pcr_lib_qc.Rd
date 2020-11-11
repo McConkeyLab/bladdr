@@ -2,7 +2,7 @@
 % Please edit documentation in R/pcr_lib_qc.R
 \name{pcr_lib_qc}
 \alias{pcr_lib_qc}
-\title{Generate visual library prep pcr quality control}
+\title{Generate visual library prep pcr quality control report}
 \usage{
 pcr_lib_qc(lib_calc_pcr)
 }
@@ -13,13 +13,14 @@ pcr_lib_qc(lib_calc_pcr)
 a ggplot
 }
 \description{
-Generate visual library prep pcr quality control
+Generate visual library prep pcr quality control report
 }
 \examples{
-
+\dontrun{
 dat_path <- system.file("extdata", "untidy-standard-curve.xlsx", package = "bladdr")
 
-pcr_tidy(dat_path) \%>\%
+lib_calc_pcr <- pcr_tidy(dat_path, pad_zero = T) \%>\%
         pcr_lib_calc() \%>\%
         pcr_lib_qc()
+}
 }

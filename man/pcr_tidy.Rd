@@ -4,11 +4,13 @@
 \alias{pcr_tidy}
 \title{Tidy a PCR Excel File}
 \usage{
-pcr_tidy(file_path = NULL)
+pcr_tidy(file_path = NULL, pad_zero = F)
 }
 \arguments{
 \item{file_path}{Path to an excel file containing the results of a qPCR
 run. If left blank, will open up interactive file chooser.}
+
+\item{pad_zero}{Should a leading zero be added to "Sample 1" etc?}
 }
 \value{
 Tidy results dataframe

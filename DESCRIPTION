@@ -20,7 +20,8 @@ Imports:
     DESeq2,
     rlang,
     tidyr,
-    tibble
+    tibble,
+    purrr
 Suggests: 
     knitr,
     rmarkdown

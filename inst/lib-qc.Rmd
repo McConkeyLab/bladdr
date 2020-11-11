@@ -1,0 +1,83 @@
+---
+title: "Library Prep. Report"
+date: "`r Sys.Date()`"
+output: html_document
+params:
+        stan:  NA
+        out:   NA
+        samp:  NA
+        conc:  NA
+        slope: NA
+---
+
+
+
+```{r echo = FALSE, message = FALSE}
+library(ggplot2)
+library(knitr)
+```
+
+:::: {style="display: flex; align-items: center;"}
+
+::: {style="flex-basis: 200px; flex-grow: 2"}
+```{r standards_plot, echo = FALSE, warning = FALSE, fig.height=3, out.width="100%"}
+params$stan
+```
+:::
+
+
+::: {style="flex-basis: 100px; flex-grow: 1"}
+Theoretical (perfectly diluted) samples are in gray, true dilutions are in blue. Samples are in red. Dilutions between standards shown in text.
+:::
+
+::::
+
+
+:::: {style="display: flex; align-items: center;"}
+
+::: {style="flex-basis: 200px; flex-grow: 2"}
+```{r outliers_plot, echo = FALSE, warning = FALSE, fig.height=5, fig.width = 7.5, out.width="100%"}
+params$out
+```
+:::
+
+::: {style="flex-basis: 100px; flex-grow: 1"}
+CT-values as represented by Z-score. Blue dots represent samples not considered outliers. Shaded blue region is +/- three standard deviations, which is considered the cutoff for outliers. Black dots are samples considered outliers. Far outliers (greater than 11 standard deviations) are represented by arrows (>>>) with the true value displayed beside it. Z scores are calculated after removing the outlier, if any. 
+:::
+
+::::
+
+
+:::: {style="display: flex; align-items: center;"}
+
+::: {style="flex-basis: 200px; flex-grow: 2"}
+```{r concentration_plot, echo = FALSE, warning = FALSE, out.width="100%"}
+params$conc
+```
+:::
+
+::: {style="flex-basis: 100px; flex-grow: 1"}
+Library concentrations across samples
+:::
+
+::::
+
+:::: {style="display: flex; align-items: center;"}
+
+::: {style="flex-basis: 200px; flex-grow: 2"}
+```{r slope_plot, echo = FALSE, warning = FALSE, message = FALSE, out.width="100%"}
+params$slope
+```
+:::
+
+::: {style="flex-basis: 100px; flex-grow: 1"}
+Log of library quantities vs CT values. An optimal slope is -3.32. An optimal efficiency is 100%. Acceptable efficiencies are >80%.
+:::
+
+::::
+
+```{r sample_summary, echo = FALSE}
+kable(params$samp)
+```
+
+
