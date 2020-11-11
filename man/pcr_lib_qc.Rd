@@ -4,10 +4,12 @@
 \alias{pcr_lib_qc}
 \title{Generate visual library prep pcr quality control report}
 \usage{
-pcr_lib_qc(lib_calc_pcr)
+pcr_lib_qc(lib_calc_pcr, report_name = NULL)
 }
 \arguments{
 \item{lib_calc_pcr}{an output from \code{pcr_lib_calc}}
+
+\item{report_name}{filename of report to be generated (do not include file extension). Defaults to date-time of report generation.}
 }
 \value{
 a ggplot

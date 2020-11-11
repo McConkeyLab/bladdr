@@ -1,7 +1,7 @@
 #' Generate visual library prep pcr quality control report
 #'
 #' @param lib_calc_pcr an output from `pcr_lib_calc`
-#'
+#' @param report_name filename of report to be generated (do not include file extension). Defaults to date-time of report generation.
 #' @return a ggplot
 #' @export
 #'
@@ -15,7 +15,7 @@
 #'         pcr_lib_calc() %>%
 #'         pcr_lib_qc()
 #'
-pcr_lib_qc <- function(lib_calc_pcr) {
+pcr_lib_qc <- function(lib_calc_pcr, report_name = NULL) {
         # Does mean(quantity) == quantity_mean?
         dat <- lib_calc_pcr %>%
                 dplyr::select(.data$task, .data$sample_name, .data$quantity_mean, .data$concentration, .data$quantity, .data$quant_actual, .data$dil, .data$slope, .data$efficiency, .data$r2, .data$ct)
@@ -135,7 +135,15 @@ pcr_lib_qc <- function(lib_calc_pcr) {
                 ggplot2::theme(axis.title = element_blank(), legend.position = "none", axis.text.x = ggplot2::element_text(angle = 90, vjust = 0.5))
 
         report <- system.file("lib-qc.Rmd", package = "bladdr")
-        rmarkdown::render(report, output_dir = "./pcr_qc_reports", output_file = paste(Sys.time(), "report.html"), params = list(stan = standards_plot, out = outliers_plot, samp = table_samples, conc = conc_plot, slope = slope_plot))
+        if (is.null(report_name)) {
+                report_name <- paste(Sys.time(), "report.html")
+        } else {
+                report_name <- paste0(report_name, ".html")
+        }
+        rmarkdown::render(report,
+                          output_dir = "./pcr_qc_reports",
+                          output_file = report_name,
+                          params = list(stan = standards_plot, out = outliers_plot, samp = table_samples, conc = conc_plot, slope = slope_plot))
 }
 
 find_mean <- function(df){
