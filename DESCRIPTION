@@ -1,6 +1,6 @@
 Package: bladdr
 Title: A Helping Hand in McConkey Land
-Version: 0.0.6.0
+Version: 0.0.7.0
 Authors@R: 
     c(person(given = "Kai", family = "Aragaki", role = c("aut", "cre"), email = "aaragak1@jhmi.edu", comment = c(ORCID = "0000-0002-9458-0426")),
     person(given = "Bridget", family = "McGuire", role = c("aut"), email = "bmcguir8@jhmi.edu"),
