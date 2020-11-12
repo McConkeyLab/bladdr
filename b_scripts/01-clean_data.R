@@ -10,7 +10,7 @@
 library(tidyverse)  ##includes ggplot2, dplyr
 library(readxl)
 library(lubridate)
-
+library(openxlsx)
 
 # Find Duplicates Function ------------------------------------------------
 ## returns all duplicates, not just second
@@ -82,7 +82,7 @@ a2 <- a2 %>% mutate(., tech = "bridget",
                input_rna = case_when(find == T ~ "undiluted",
                                        TRUE ~ as.character(input_rna)))
 
-a2_1 <- remove_duplicates(a2)
+a2 <- remove_duplicates(a2)
 ## 266 unique observations
 
 
@@ -389,14 +389,14 @@ binary_complete <- complete_total[!complete_total$success == "M",]
 
 # Clean Up ----------------------------------------------------------------
 remove(a1, a2, ab, bcg, chemo, cis, cs, eva_ne, eva_qiagen, eva_roche, gbci,
-       msk_qiagen, msk_roche, scc, wc, find, findh20)
+       msk_qiagen, msk_roche, scc, wc, find, findh20, remove_first_duplicates,
+       remove_duplicates)
 
 # Create Train, Test, Validate --------------------------------------------
 ## want equal amounts of failed + succeeded for train dataset.
 ## NOT FINAL - JUST MESSING AROUND HERE.
 
 train_n <- binary_complete[binary_complete$success == "N",]
-set.seed(100)
 train_y <- binary_complete[!binary_complete$success == "N",] %>%
         slice_sample(., n = nrow(train_n))
 train <- rbind(train_n, train_y) %>% slice_sample(., prop = 1.0) %>%
@@ -408,7 +408,7 @@ remove(train_n, train_y)
 
 
 # Write Datasets for Later Use --------------------------------------------
-write.table(complete_total, "complete_total.txt")
-write.table(train, "training_data.txt")
-write.table(binary_complete, "binary_complete.txt")
+write.xlsx(complete_total, "./b_datasets/complete_total.xlsx")
+write.xlsx(train, "./b_datasets/training_data.xlsx")
+write.xlsx(binary_complete, "./b_datasets/binary_complete.xlsx")
 

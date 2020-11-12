@@ -1,12 +1,15 @@
 
-# Load Data ---------------------------------------------------------------
-train <- read.table("training_data")
-
 
 # Load Packages -----------------------------------------------------------
 library(tidyverse)
+library(readxl)
 library(faraway)
 library(broom)
+library(car)
+
+# Load Data ---------------------------------------------------------------
+
+train <- read_excel("./b_datasets/training_data.xlsx")
 
 # How's My Driving? -------------------------------------------------------
 r_values <- function(model, n) {
@@ -114,91 +117,64 @@ compare_models <- function(model1, model2) {
 log_model <- glm(success_binary ~ nano_conc + protein + salt + tape_conc +
                  conc_200 + dv200 + input_rna + tech + kit,
                  data = train, family = "binomial")
+summary(log_model1)
 
-## from summary: intercept, protein, salt, tape_conc, conc_200, dv200, kit
+## from summary: intercept, protein, tape_conc, conc_200, dv200
     ## matches what conf_ints says
-## AIC == 446.73
+        ## not kit though?
+## AIC == 352.88
 
-r_values(log_model, 386)
+r_values(log_model, nrow(train))
 ## p < 0.05
 
 OR(log_model)
-
 conf_ints(log_model)
+        ## if conf int. crosses 1 then its useless --> cant use that variable?
 
 quick_plot(log_model, train, "first model")
 ## its okay
 
+## checking for multicollinearity(idk how to spell it)
+vif(log_model)
+## tape_conc and conc_200 (to be expected, theyre pretty much the same)
+        ## deciding to keep tape_conc because thats the value we use to
+        ## determine rna dilutions
+
+
 
 # Model 2 -----------------------------------------------------------------
+log_model2 <- glm(success_binary ~ nano_conc + protein + salt + tape_conc +
+                                 dv200 + tech + input_rna + kit,
+                         data = train, family = "binomial")
+summary(log_model2)
+## AIC == 364.27; went up, interesting
 
-log_model2 <- glm(success_binary ~ protein + salt + tape_conc + conc_200
-                  + dv200 + kit,
-                 data = train, family = "binomial")
+r_values(log_model2, nrow(train))
+## p < 0.05
 
-## AIC == 448.77
-
+OR(log_model2)
 conf_ints(log_model2)
+quick_plot(log_model2, train, "second model - no conc_200")
+vif(log_model2)
 
-quick_plot(log_model2, train, "second model")
-
-train2 <- case_diagnositcs(log_model2, train)
-
-
-
+## testing linearity of the logit
+probs <- predict(log_model2)
 
 
-removedata <- train_model2.1$cooks_distance > 1.0
-train2.2 <- train[!removedata,]
+## when you run this as a model, you want the new variables to NOT be
+## significant -- that would violate the assumption of linearity
 
-log_model2.2 <- glm(success_binary ~ kit +  protein + salt,
-                    data = train2.2, family = "binomial")
+test_model <- glm(success_binary ~ nano_conc + protein + salt + tape_conc +
+                          dv200 + tech + input_rna + kit + nano_conc_log +
+                          protein_log + salt_log + tape_conc_log + dv200_log,
+                  data = logit_frame, family = "binomial")
+summary(test_model)
 
-train_model2.2 <- train2.2 %>% mutate(., predicted_prob = fitted(log_model2.2),
-                                   standard_residuals = rstandard(log_model2.2),
-                                   student_residuals = rstudent(log_model2.2),
-                                   df_beta = dfbeta(log_model2.2),
-                                   df_fits = dffits(log_model2.2),
-                                   leverage = hatvalues(log_model2.2),
-                                   cooks_distance = cooks.distance(log_model2.2))
 
-OR2.2 <- exp(log_model2.2$coefficients)
-CI2.2 <- exp(confint(log_model2.2))
+## ROC cut off of like 75%
 
 
 
 
-
-
-## lines 5-24 stolen from
-## https://github.com/StatQuest/logistic_regression_demo/
-##    blob/master/logistic_regression_demo.R
-
-ll.null <- log_model$null.deviance/-2
-ll.proposed <- log_model$deviance/-2
-## McFadden's Pseudo R^2 = [ LL(Null) - LL(Proposed) ] / LL(Null)
-(ll.null - ll.proposed) / ll.null
-
-## The p-value for the R^2
-1 - pchisq(2*(ll.proposed - ll.null), df=(length(log_model$coefficients)-1))
-
-predicted.data <- data.frame(
-    probability.of.success = log_model2.2$fitted.values,
-    success = train2.2$success)
-
-predicted.data <- predicted.data[
-    order(predicted.data$probability.of.success, decreasing = FALSE),]
-predicted.data$rank <- 1:nrow(predicted.data)
-
-## Lastly, we can plot the predicted probabilities for each sample having
-## heart disease and color by whether or not they actually had heart disease
-ggplot(data = predicted.data, aes(x = rank, y = probability.of.success)) +
-    geom_point(aes(color = success), alpha=1) +
-    ylab("Probability of Success") + xlab(element_blank()) +
-    labs(title = "Probability of Library Success using (Incomplete) Training Data")
-
-
-
-ggsave("log_modeling.pdf")
 
 
