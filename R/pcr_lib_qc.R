@@ -136,7 +136,7 @@ pcr_lib_qc <- function(lib_calc_pcr, report_name = NULL) {
 
         report <- system.file("lib-qc.Rmd", package = "bladdr")
         if (is.null(report_name)) {
-                report_name <- paste(Sys.time(), "report.html")
+                report_name <- paste0(gsub(":", "-", gsub("\\s", "_", Sys.time())),"_report.html")
         } else {
                 report_name <- paste0(report_name, ".html")
         }
