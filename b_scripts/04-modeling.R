@@ -1,5 +1,4 @@
 
-
 # Load Packages -----------------------------------------------------------
 library(tidyverse)
 library(readxl)
@@ -20,7 +19,7 @@ r_values <- function(model, n) {
 
     R2_hl <- chi_model/model$null.deviance
     R2_cs <- 1 - exp((model$deviance - model$null.deviance)/n)
-    R2_n <- R2_cs/(1 - (exp(-(log_model$null.deviance/n))))
+    R2_n <- R2_cs/(1 - (exp(-(model$null.deviance/n))))
 
     df <- rbind(R2_hl, R2_cs, R2_n, chisq_prob)
 
@@ -116,7 +115,7 @@ log_data <- function(model, train, prob) {
     data <- select_if(train, is.numeric)
     variables <- colnames(data)
     data <- data %>%
-        mutate(logit = log(prob/(1 - prob))) %>%
+        mutate(.,logit = log(prob/(1 - prob))) %>%
         pivot_longer(!logit, names_to = "variables")
 }
 
@@ -127,18 +126,18 @@ log_view <- function(log_data) {
                facet_wrap(~variables, scales = "free_y")
 }
 
-pred_values <- function(model, train, k) {
+pred_values <- function(model, train, k, p) {
     case_diagnositcs(model, train, k = 9) %>%
         mutate(., probability = predict(model, type = "response")) %>%
         select(., colnames(train), probability) %>%
-        mutate(., call = ifelse(probability > 0.5, 1, 0))
+        mutate(., call = ifelse(probability > p, 1, 0))
 }
 
-pred_value_test <- function(model, testdata) {
+pred_value_test <- function(model, testdata, p) {
     testdata %>%
         mutate(., probability = predict(model, newdata = testdata, type = "response")) %>%
         select(., colnames(testdata), probability) %>%
-        mutate(., call = ifelse(probability > 0.5, 1, 0))
+        mutate(., call = ifelse(probability > p, 1, 0))
 }
 ## most accurate when prob set to 0.15???
 
@@ -153,7 +152,7 @@ summary(log_model)
 ## from summary: intercept, protein, tape_conc, conc_200, dv200
     ## matches what conf_ints says
         ## not kit though?
-## AIC == 352.88
+## AIC == 396.14
 
 
 # Model 1 - QC ------------------------------------------------------------
@@ -175,15 +174,9 @@ vif(log_model)
         ## determine rna dilutions
 
 
-# Model 1 - editing train data --------------------------------------------
-
-## testing linearity of the logit
-probs <- predict(log_model, type = "response")
-    ## need for log_data and log_view!!
-
 problem <- case_diagnositcs(log_model, train, k = 9) %>% problem_samples(.)
 
-train_add <- pred_values(log_model, train, 9)
+train_add <- pred_values(log_model, train, 9, 0.5)
 
 sum_log <- train_add %>%
     group_by(., success, call) %>%
@@ -195,14 +188,19 @@ bad_calls <- train_add[!find_wrong,]
 
 ## 24% of calls are wrong (using 0.5 cut off)
 
+probs <- predict(log_model, type = "response")
+
+log_view(log_data(log_model, train, probs))
+
 
 
 # Model 2 -----------------------------------------------------------------
+## basically model 1, but with bad variables removed
 log_model2 <- glm(success_binary ~ nano_conc + protein + salt + tape_conc +
                                  dv200 + kit + input_rna,
                          data = train, family = "binomial")
 summary(log_model2)
-## AIC == 362.72; went up, interesting
+## AIC == 401.42; went up, interesting
 
 r_values(log_model2, nrow(train))
 ## p < 0.05
@@ -215,9 +213,11 @@ vif(log_model2)
 ## testing linearity of the logit
 probs2 <- predict(log_model2, type = "response")
 
+log_view(log_data(log_model2, train, probs2))
+
 problem2 <- case_diagnositcs(log_model2, train, k = 7) %>% problem_samples(.)
 
-train_add2 <- pred_values(log_model2, train, 7)
+train_add2 <- pred_values(log_model2, train, 7, 0.5)
 
 sum_log2 <- train_add2 %>%
     group_by(., success, call) %>%
@@ -226,30 +226,22 @@ sum_log2 <- train_add2 %>%
 find_wrong2 <- train_add2$success_binary == train_add2$call
 
 bad_calls2 <- train_add2[!find_wrong2,]
-##29% miscalled
-
-
-## ROC cut off of like 75%
-
-
-
-
-
+##27% miscalled
 
 
 
 # Testing -----------------------------------------------------------------
 binary_complete <- read_excel("./b_datasets/binary_complete.xlsx")
 
-test_probs <- predict(log_model2, newdata = binary_complete, type = "response")
-
-test_add <- pred_value_test(log_model2, binary_complete)
+test_add <- pred_value_test(log_model2, binary_complete, 0.15)
 
 test_sum_log <- test_add %>%
     group_by(., success, call) %>%
     summarise(., n())
 
 test_find_wrong <- test_add$success_binary == test_add$call
+table(test_find_wrong) %>% .[2]/(nrow(binary_complete)) * 100
+    ## gives % of correct calls
 
 test_bad_calls <- test_add[!test_find_wrong,]
 
