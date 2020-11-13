@@ -383,8 +383,13 @@ total <- rbind(a1, a2, ab, bcg, chemo, cis, cs, eva_ne, eva_qiagen,
                eva_roche, gbci, msk_qiagen, msk_roche, scc, wc)
 
 complete_total <- total[complete.cases(total),]
+complete_total <- complete_total[!complete_total$input_rna == 30, ] %>%
+        mutate(., success_binary = case_when(success == "Y" ~ 1,
+                                           success == "N" ~ 0))
 
-binary_complete <- complete_total[!complete_total$success == "M",]
+binary_complete <- complete_total[!complete_total$success == "M",] %>%
+        mutate(., success_binary = case_when(success == "Y" ~ 1,
+                                             success == "N" ~ 0))
 
 
 # Clean Up ----------------------------------------------------------------

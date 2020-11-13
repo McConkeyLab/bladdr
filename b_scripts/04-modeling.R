@@ -12,6 +12,7 @@ library(car)
 train <- read_excel("./b_datasets/training_data.xlsx")
 
 # How's My Driving? -------------------------------------------------------
+## bunch of functions to make comparisons between models easier and faster
 r_values <- function(model, n) {
     chi_model <- model$null.deviance - model$deviance
     chi_df <- model$df.null - model$df.residual
@@ -64,14 +65,14 @@ quick_plot <- function(model, train, title) {
 
 ## this function helps you find problem samples within the training set
 ## n = number of samples, k = number of predictors
-case_diagnositcs <- function(model, train, n, k) {
+case_diagnositcs <- function(model, train, k) {
    train %>% mutate(., predicted_prob = fitted(model),
                                     standard_residuals = rstandard(model),
                                     student_residuals = rstudent(model),
                                     df_beta = dfbeta(model),
                                     df_fits = dffits(model),
                                     leverage = hatvalues(model),
-                                    expected_leverage = (k + 1)/n,
+                                    expected_leverage = (k + 1)/nrow(train),
                                     cooks_distance = cooks.distance(model))
 }
 
@@ -111,18 +112,51 @@ compare_models <- function(model1, model2) {
 
 }
 
+log_data <- function(model, train, prob) {
+    data <- select_if(train, is.numeric)
+    variables <- colnames(data)
+    data <- data %>%
+        mutate(logit = log(prob/(1 - prob))) %>%
+        pivot_longer(!logit, names_to = "variables")
+}
+
+log_view <- function(log_data) {
+    ggplot(log_data, aes(logit, value)) +
+               geom_point(size = 0.5, alpha = 0.5) +
+               geom_smooth(method = "loess") +
+               facet_wrap(~variables, scales = "free_y")
+}
+
+pred_values <- function(model, train, k) {
+    case_diagnositcs(model, train, k = 9) %>%
+        mutate(., probability = predict(model, type = "response")) %>%
+        select(., colnames(train), probability) %>%
+        mutate(., call = ifelse(probability > 0.5, 1, 0))
+}
+
+pred_value_test <- function(model, testdata) {
+    testdata %>%
+        mutate(., probability = predict(model, newdata = testdata, type = "response")) %>%
+        select(., colnames(testdata), probability) %>%
+        mutate(., call = ifelse(probability > 0.5, 1, 0))
+}
+## most accurate when prob set to 0.15???
+
 
 # Model 1 -----------------------------------------------------------------
 
 log_model <- glm(success_binary ~ nano_conc + protein + salt + tape_conc +
                  conc_200 + dv200 + input_rna + tech + kit,
                  data = train, family = "binomial")
-summary(log_model1)
+summary(log_model)
 
 ## from summary: intercept, protein, tape_conc, conc_200, dv200
     ## matches what conf_ints says
         ## not kit though?
 ## AIC == 352.88
+
+
+# Model 1 - QC ------------------------------------------------------------
 
 r_values(log_model, nrow(train))
 ## p < 0.05
@@ -141,13 +175,34 @@ vif(log_model)
         ## determine rna dilutions
 
 
+# Model 1 - editing train data --------------------------------------------
+
+## testing linearity of the logit
+probs <- predict(log_model, type = "response")
+    ## need for log_data and log_view!!
+
+problem <- case_diagnositcs(log_model, train, k = 9) %>% problem_samples(.)
+
+train_add <- pred_values(log_model, train, 9)
+
+sum_log <- train_add %>%
+    group_by(., success, call) %>%
+    summarise(., n())
+
+find_wrong <- train_add$success_binary == train_add$call
+
+bad_calls <- train_add[!find_wrong,]
+
+## 24% of calls are wrong (using 0.5 cut off)
+
+
 
 # Model 2 -----------------------------------------------------------------
 log_model2 <- glm(success_binary ~ nano_conc + protein + salt + tape_conc +
-                                 dv200 + tech + input_rna + kit,
+                                 dv200 + kit + input_rna,
                          data = train, family = "binomial")
 summary(log_model2)
-## AIC == 364.27; went up, interesting
+## AIC == 362.72; went up, interesting
 
 r_values(log_model2, nrow(train))
 ## p < 0.05
@@ -158,17 +213,20 @@ quick_plot(log_model2, train, "second model - no conc_200")
 vif(log_model2)
 
 ## testing linearity of the logit
-probs <- predict(log_model2)
+probs2 <- predict(log_model2, type = "response")
 
+problem2 <- case_diagnositcs(log_model2, train, k = 7) %>% problem_samples(.)
 
-## when you run this as a model, you want the new variables to NOT be
-## significant -- that would violate the assumption of linearity
+train_add2 <- pred_values(log_model2, train, 7)
 
-test_model <- glm(success_binary ~ nano_conc + protein + salt + tape_conc +
-                          dv200 + tech + input_rna + kit + nano_conc_log +
-                          protein_log + salt_log + tape_conc_log + dv200_log,
-                  data = logit_frame, family = "binomial")
-summary(test_model)
+sum_log2 <- train_add2 %>%
+    group_by(., success, call) %>%
+    summarise(., n())
+
+find_wrong2 <- train_add2$success_binary == train_add2$call
+
+bad_calls2 <- train_add2[!find_wrong2,]
+##29% miscalled
 
 
 ## ROC cut off of like 75%
@@ -177,4 +235,21 @@ summary(test_model)
 
 
 
+
+
+
+# Testing -----------------------------------------------------------------
+binary_complete <- read_excel("./b_datasets/binary_complete.xlsx")
+
+test_probs <- predict(log_model2, newdata = binary_complete, type = "response")
+
+test_add <- pred_value_test(log_model2, binary_complete)
+
+test_sum_log <- test_add %>%
+    group_by(., success, call) %>%
+    summarise(., n())
+
+test_find_wrong <- test_add$success_binary == test_add$call
+
+test_bad_calls <- test_add[!test_find_wrong,]
 
