@@ -21,7 +21,8 @@ Imports:
     rlang,
     tidyr,
     tibble,
-    purrr
+    purrr,
+    SummarizedExperiment
 Suggests: 
     knitr,
     rmarkdown
