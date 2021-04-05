@@ -25,7 +25,8 @@ Imports:
     SummarizedExperiment,
     sharepointr,
     ggrepel,
-    pheatmap
+    pheatmap,
+    grDevices
 Suggests: 
     knitr,
     rmarkdown
