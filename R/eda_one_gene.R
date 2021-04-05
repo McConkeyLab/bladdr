@@ -20,14 +20,8 @@ eda_one_gene <- function(dds, gene, stratifier, assay = 2) {
         expression <- SummarizedExperiment::assay(dds, assay)[gene_ind,]
         plotting_data = data.frame(as.data.frame(SummarizedExperiment::colData(dds)), expression = expression)
         ggplot2::ggplot(plotting_data, ggplot2::aes(x = {{stratifier}}, y = expression, color = {{stratifier}}, fill = {{stratifier}})) +
-                ggplot2::geom_jitter(alpha = 0.7) +
-                ggplot2::labs(y = gene, x = deparse(substitute(stratifier))) +
-                ggplot2::theme_minimal() +
-                ggplot2::scale_color_viridis_d(option = "B", begin = 0.5, end = 0.8) +
-                ggplot2::scale_fill_viridis_d(option = "B", begin = 0.5, end = 0.8) +
-                ggplot2::coord_cartesian(ylim = c(0, NA)) +
-                ggplot2::theme(panel.grid = ggplot2::element_blank(),
-                      text = ggplot2::element_text(size = 20),
-                      legend.position = "none",
-                      panel.background = ggplot2::element_rect(fill = "#FFFFF8", color = NA))
+                ggplot2::geom_dotplot(binaxis = "y", binwidth = 0.2, stackdir = "center") +
+                ggplot2::labs(y = gene, x = NULL) +
+                ggrepel::geom_text_repel(aes(label = .data$cell), nudge_x = 0.5) +
+                ggplot2::theme(legend.position = "none")
 }
