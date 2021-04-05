@@ -22,7 +22,10 @@ Imports:
     tidyr,
     tibble,
     purrr,
-    SummarizedExperiment
+    SummarizedExperiment,
+    sharepointr,
+    ggrepel,
+    pheatmap
 Suggests: 
     knitr,
     rmarkdown
