@@ -4,7 +4,7 @@
 \alias{eda_heatmap}
 \title{Make a heatmap of a select number of genes}
 \usage{
-eda_heatmap(dds, genes, stratifier = NULL, assay = 2)
+eda_heatmap(dds, genes, stratifier = NULL, assay = 2, ...)
 }
 \arguments{
 \item{dds}{a \code{dds} object with HGCN symbols as rownames}
@@ -14,6 +14,8 @@ eda_heatmap(dds, genes, stratifier = NULL, assay = 2)
 \item{stratifier}{optional. A character vector specifying a column in colData by which to color samples in the pheatmap.}
 
 \item{assay}{the assay number that contains normalized counts}
+
+\item{...}{additional arguments that will be passed to \code{pheatmap}}
 }
 \value{
 a \code{pheatmap}
