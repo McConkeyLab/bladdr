@@ -21,7 +21,7 @@ Generate visual library prep pcr quality control report
 
 dat_path <- system.file("extdata", "untidy-standard-curve.xlsx", package = "bladdr")
 
-lib_calc_pcr <- pcr_tidy(dat_path, pad_zero = TRUE) \%>\%
+pcr_tidy(dat_path, pad_zero = TRUE) \%>\%
         pcr_lib_calc() \%>\%
         pcr_lib_qc()
 

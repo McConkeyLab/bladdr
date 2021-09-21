@@ -2,7 +2,9 @@
 
 export("%>%")
 export(eda_heatmap)
+export(eda_n_gene)
 export(eda_one_gene)
+export(eda_two_gene)
 export(pad_zero)
 export(pcr_control)
 export(pcr_lib_calc)
