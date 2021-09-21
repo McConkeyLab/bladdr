@@ -11,12 +11,13 @@
 #'
 #' dat_path <- system.file("extdata", "untidy-standard-curve.xlsx", package = "bladdr")
 #'
-#' lib_calc_pcr <- pcr_tidy(dat_path, pad_zero = TRUE) %>%
+#' pcr_tidy(dat_path, pad_zero = TRUE) %>%
 #'         pcr_lib_calc() %>%
 #'         pcr_lib_qc()
 #'
 pcr_lib_qc <- function(lib_calc_pcr, report_name = NULL) {
         # Does mean(quantity) == quantity_mean?
+        # Take only what you need:
         dat <- lib_calc_pcr %>%
                 dplyr::select(.data$task, .data$sample_name, .data$quantity_mean, .data$concentration, .data$quantity, .data$quant_actual, .data$dil, .data$slope, .data$efficiency, .data$r2, .data$ct)
 
@@ -112,6 +113,8 @@ pcr_lib_qc <- function(lib_calc_pcr, report_name = NULL) {
                                                        T ~ NA_character_)) %>%
                 dplyr::filter(!is.na(.data$sample_name))
 
+        # Plot z-score (y) of samples (x) with a shading window of -3 < z < 3.
+        # Z-scores are centered using the outlier-removed mean
         outliers_plot <-
                 ggplot2::ggplot(outliers_plot_dat, aes(x = .data$z_plot, y = .data$sample_name, color = .data$keep_logi, shape = .data$overflow)) +
                 ggplot2::scale_color_manual(values = c("#666666", "#00AAAA")) +
@@ -124,22 +127,28 @@ pcr_lib_qc <- function(lib_calc_pcr, report_name = NULL) {
                 ggplot2::coord_cartesian(xlim = c(-11.5, 11.5), ylim = c(0.5, length(unique(outliers_plot_dat$sample_name)) + 0.5), expand = F) +
                 ggplot2::theme(panel.grid.major.x = element_blank(), axis.title.y = element_blank(), panel.grid.minor.x = element_blank(), legend.position = "none")
 
+
         table_samples <- sample_summary %>%
                 dplyr::select(-.data$quantity_mean) %>%
                 dplyr::rename("Sample Name" = .data$sample_name,
                               "Concentration" = .data$concentration_mean)
 
+        # Plot library concentration (y) of samples (x)
         conc_plot <-
                 ggplot2::ggplot(table_samples, aes(x = .data$`Sample Name`, y = .data$`Concentration`)) +
                 ggplot2::geom_point(color = "#00AAAA", size = 5) +
                 ggplot2::theme(axis.title = element_blank(), legend.position = "none", axis.text.x = ggplot2::element_text(angle = 90, vjust = 0.5))
 
         report <- system.file("lib-qc.Rmd", package = "bladdr")
+
+        # If there's a user supplied filename, use that. If not, use current date and time.
         if (is.null(report_name)) {
                 report_name <- paste0(gsub(":", "-", gsub("\\s", "_", Sys.time())),"_report.html")
         } else {
                 report_name <- paste0(report_name, ".html")
         }
+
+        # Generate report
         rmarkdown::render(report,
                           output_dir = "./pcr_qc_reports",
                           output_file = report_name,

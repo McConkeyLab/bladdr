@@ -1,3 +1,10 @@
+eda_two_gene <- function(dds, gene1, gene2, color_by_clade = TRUE) {
+        get_gene_ind <- function(gene_name) {
+
+        }
+}
+
+
 #' Plot the expression of one gene across a stratifying argument
 #'
 #' @param dds A `DESeqDataSet` object
@@ -12,19 +19,11 @@
 eda_one_gene <- function(dds, gene, stratifier, assay = 2) {
 
         gene_ind <- get_gene_index(dds, gene)
-
         expression <- SummarizedExperiment::assay(dds, assay)[gene_ind,]
-
-        dds |>
-                SummarizedExperiment::colData() |>
-                as.data.frame() |>
-                data.frame(expression = expression) |>
-                ggplot2::ggplot(ggplot2::aes(x = .data[[stratifier]],
-                                             y = expression,
-                                             color = .data[[stratifier]])) +
-                ggplot2::geom_point() +
+        plotting_data = data.frame(as.data.frame(SummarizedExperiment::colData(dds)), expression = expression)
+        ggplot2::ggplot(plotting_data, ggplot2::aes(x = .data[[stratifier]], y = expression, color = .data[[stratifier]], fill = .data[[stratifier]])) +
+                ggplot2::geom_dotplot(binaxis = "y", binwidth = 0.2, stackdir = "center") +
                 ggplot2::labs(y = gene, x = NULL) +
                 ggrepel::geom_text_repel(aes(label = .data$cell), nudge_x = 0.5) +
-                theme_tufte() +
-                ggplot2::theme(legend.position = "none")
+
 }
