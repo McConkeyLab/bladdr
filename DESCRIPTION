@@ -1,11 +1,11 @@
 Package: bladdr
 Title: A Helping Hand in McConkey Land
-Version: 0.0.7.0
+Version: 0.0.8.0
 Authors@R: 
     c(person(given = "Kai", family = "Aragaki", role = c("aut", "cre"), email = "aaragak1@jhmi.edu", comment = c(ORCID = "0000-0002-9458-0426")),
     person(given = "Bridget", family = "McGuire", role = c("aut"), email = "bmcguir8@jhmi.edu"),
     person(given = "Mingxiao", family = "Feng", role = c("aut"), email = "mfeng8@jhmi.edu"))
-Description: The goal of `bladdr` is to make the tedious lab tasks a little less tedious and a lot more reproducible.
+Description: `bladdr` makes lab tasks less tedious and more reproducible.
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
@@ -26,8 +26,8 @@ Imports:
     sharepointr,
     ggrepel,
     pheatmap,
-    grDevices
-Suggests: 
+    grDevices,
+    gt,
     knitr,
     rmarkdown
 VignetteBuilder: knitr

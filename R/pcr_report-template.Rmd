@@ -1,0 +1,121 @@
+---
+title: "Plan PCR Report"
+params:
+  sample_prep: NA
+  mm_prep: NA
+  plate: NA
+  n_primers: NA
+  primer_names: NA
+  format: NA
+  exclude_border: NA
+---
+
+
+# Analysis Parameters
+
+- **Date:**              `r Sys.Date()`
+- **Number of Primers:** `r params$n_primers`
+- **Primer Names:**      `r params$primer_names`
+- **Plate Format:**      `r params$format`
+- **Exclude Border?**    `r params$exclude_border`
+
+# Sample Preparation
+```{r echo = F}
+sp <- params$sample_prep
+
+colnames(sp) <- c("Sample", "[RNA]", names(sp)[-c(1:2)])
+
+sp |> 
+  gt::gt() |> 
+  gt::fmt_number(c("diluted_rna_to_add", "water_to_add")) |> 
+  gt::cols_label(
+    dilution_factor = "Dil. Factor",
+    diluted_concentration = "Dil. [RNA] ",
+    diluted_rna_to_add = "Vol. dil. [RNA]",
+    water_to_add = "Vol. H2O",
+    final_vol = "Vol. final (uL)"
+  ) |> 
+  gt::tab_style(
+    style = list(
+      gt::cell_fill(color = "#2C5295"),
+      gt::cell_text(color = "#FFFFFF"),
+      gt::cell_borders(color = "#1C345F")
+    ),
+    locations = gt::cells_body()
+  ) |>  
+  gt::tab_style(
+    style = list(
+      gt::cell_fill(color = "#1C345F"),
+      gt::cell_text(weight = "bold", color = "#FFFFFF"),
+      gt::cell_borders(color = "#1C345F")
+    ),
+    locations = gt::cells_column_labels()
+  ) |> 
+  gt::tab_options(table.align = "left") |> 
+  gt::tab_options(
+    column_labels.border.bottom.color = "#1C345F"
+  ) |> 
+  gt::opt_table_outline(color = "#1C345F")
+
+```
+
+# Mastermix Preparation
+```{r echo = F}
+params$mm_prep |> 
+  gt::gt() |>  
+  gt::fmt_number(
+    c("vol")
+  ) |> 
+  gt::cols_label(
+    reagent = "Reagent",
+    vol = "Volume (uL)"
+  ) |> 
+  gt::tab_style(
+    style = list(
+      gt::cell_fill(color = "#2C5295"),
+      gt::cell_text(color = "#FFFFFF"),
+      gt::cell_borders(color = "#1C345F")
+    ),
+    locations = gt::cells_body()
+  ) |>  
+  gt::tab_style(
+    style = list(
+      gt::cell_fill(color = "#1C345F"),
+      gt::cell_text(weight = "bold", color = "#FFFFFF"),
+      gt::cell_borders(color = "#1C345F")
+    ),
+    locations = gt::cells_column_labels()
+  ) |> 
+  gt::tab_options(table.align = "left") |> 
+  gt::tab_options(
+    column_labels.border.bottom.color = "#1C345F"
+  ) |> 
+  gt::opt_table_outline(color = "#1C345F")
+
+```
+
+# Mastermix Layout
+```{r echo = F, fig.width=10, fig.height=7, out.width="100%"}
+
+if(params$format == 96) {
+  size <- 24
+  size_text <- 8
+} else {
+  size <- 12
+  size_text <- 6
+}
+ 
+ggplot2::ggplot(params$plate, ggplot2::aes(x = col, y = row, color = primer, label = primer_name)) + 
+  ggplot2::geom_point(size = size) + 
+  ggplot2::geom_text(color = "black", size = size_text, na.rm = TRUE) + 
+  ggplot2::theme(legend.position = "none", plot.background = ggplot2::element_blank())
+```
+
+
+# Sample Layout
+```{r echo = F, fig.width=10, fig.height=7, out.width="100%"}
+ggplot2::ggplot(params$plate, ggplot2::aes(x = col, y = row, color = sample, label = sample_name)) + 
+  ggplot2::geom_point(size = size) + 
+  ggplot2::geom_text(color = "black", size = size_text, na.rm = TRUE) +
+  ggplot2::theme(legend.position = "none", plot.background = ggplot2::element_blank())
+```
