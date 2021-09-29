@@ -87,8 +87,6 @@ plan_pcr <- function(data, n_primers, format = 384, exclude_border = TRUE,
     vol = c(6.25, .625, .5, 3.125) * (n_samples + ntc + 2) * reps
   )
 
-
-
   if (make_report) {
     if (missing(file_path)) {
       file_path <- tempfile(pattern = paste0(Sys.Date(), "_pcr-report_"), fileext = ".html")
@@ -105,8 +103,9 @@ plan_pcr <- function(data, n_primers, format = 384, exclude_border = TRUE,
     rmarkdown::render("./R/pcr_report-template.Rmd", output_file = file_path,
                       params = params, envir = new.env(parent = globalenv()))
 
+    return(list(master_mix_prep = mm, sample_prep = sample_prep, plate = plate, report_path = file_path))
   }
-  list(mm, sample_prep, plate)
+  list(master_mix_prep = mm, sample_prep = sample_prep, plate = plate)
 }
 
 useable_plate_dims <- function(plate) {
@@ -161,7 +160,6 @@ denote_vlane <- function(plate, plate_dims, reps) {
     dplyr::mutate(lane_v = lanes)
 }
 
-# Horizontal lanes depend on the number of samples
 denote_hlane <- function(plate, plate_dims, n_samples, ntc) {
   total_samples <- n_samples + ntc
   num_lanes <-  plate_dims$rows %/% total_samples
@@ -196,8 +194,6 @@ section_lanes <- function(laned_plate, n_primers) {
     dplyr::ungroup()
 }
 
-
-## Add names to lanes...
 add_sample_names <- function(plate, reps, sample_names) {
   plate <- plate |>
     dplyr::group_by(primer) |>
