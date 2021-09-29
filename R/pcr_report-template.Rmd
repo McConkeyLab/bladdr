@@ -102,7 +102,7 @@ if(params$format == 96) {
   size_text <- 8
 } else {
   size <- 12
-  size_text <- 6
+  size_text <- 4
 }
  
 ggplot2::ggplot(params$plate, ggplot2::aes(x = col, y = row, color = primer, label = primer_name)) + 
@@ -114,8 +114,16 @@ ggplot2::ggplot(params$plate, ggplot2::aes(x = col, y = row, color = primer, lab
 
 # Sample Layout
 ```{r echo = F, fig.width=10, fig.height=7, out.width="100%"}
-ggplot2::ggplot(params$plate, ggplot2::aes(x = col, y = row, color = sample, label = sample_name)) + 
+plot_labels <- dplyr::arrange(params$plate, primer) |> 
+  dplyr::pull(sample_name) |> 
+  unique()
+
+plot_labels <- plot_labels[which(!is.na(plot_labels))]
+plot_labels <- c(plot_labels, NA)
+
+ggplot2::ggplot(params$plate, ggplot2::aes(x = col, y = row, color = sample, label = plotting_name)) + 
   ggplot2::geom_point(size = size) + 
   ggplot2::geom_text(color = "black", size = size_text, na.rm = TRUE) +
-  ggplot2::theme(legend.position = "none", plot.background = ggplot2::element_blank())
+  ggplot2::scale_color_hue(labels = plot_labels) + 
+  ggplot2::theme(legend.position = "bottom", plot.background = ggplot2::element_blank())
 ```

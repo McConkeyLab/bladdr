@@ -23,7 +23,8 @@ plan_pcr <- function(data, n_primers, format = 384, exclude_border = TRUE,
   rna_per_well <- 2#uL Vol RNA/well
 
   # Runtime constants ----------------------------------------------------------
-  sample_names <- get_sample_names(data, has_names)
+  sample_names <- data  |>
+    get_sample_names(has_names)
 
   if (!has_names) {
     data <- cbind(sample_names, data)
@@ -75,9 +76,9 @@ plan_pcr <- function(data, n_primers, format = 384, exclude_border = TRUE,
     dplyr::mutate(dilution_factor = get_best_factor(vol_to_add)) |>
     dplyr::ungroup() |>
     dplyr::mutate(diluted_concentration = data[[2]] / dilution_factor,
-           final_vol = final_vol,
-           diluted_rna_to_add = final_rna_conc * final_vol / diluted_concentration,
-           water_to_add = final_vol - diluted_rna_to_add) |>
+                  final_vol = final_vol,
+                  diluted_rna_to_add = final_rna_conc * final_vol / diluted_concentration,
+                  water_to_add = final_vol - diluted_rna_to_add) |>
     dplyr::select(-vol_to_add) |>
     dplyr::relocate(final_vol, .after = dplyr::last_col())
 
@@ -176,10 +177,10 @@ flow_lanes <- function(plate, n_primers, n_samples, ntc, reps) {
   length(primers) <- nrow(plate)
   dplyr::arrange(plate, lane_v, dplyr::desc(row)) |>
     dplyr::mutate(primer = primers,
-           primer = dplyr::if_else(primer <= n_primers,
-                            primer,
-                            NA_integer_),
-           available_well = TRUE)
+                  primer = dplyr::if_else(primer <= n_primers,
+                                          primer,
+                                          NA_integer_),
+                  available_well = TRUE)
 }
 
 section_lanes <- function(laned_plate, n_primers) {
@@ -189,7 +190,7 @@ section_lanes <- function(laned_plate, n_primers) {
     dplyr::group_by(primer) |>
     dplyr::mutate(primer = dplyr::if_else(dplyr::cur_group_id() <= n_primers,
                                           dplyr::cur_group_id(),
-                            NA_integer_),
+                                          NA_integer_),
                   available_well = TRUE) |>
     dplyr::ungroup()
 }
@@ -198,21 +199,25 @@ add_sample_names <- function(plate, reps, sample_names) {
   plate <- plate |>
     dplyr::group_by(primer) |>
     dplyr::mutate(sample = (dplyr::row_number() + 2) %/% reps,
-           sample = dplyr::if_else(!is.na(primer), sample, NA_real_)) |>
+                  sample = dplyr::if_else(!is.na(primer), sample, NA_real_)) |>
     dplyr::group_by(sample) |>
     tidyr::nest() |>
     dplyr::ungroup()
 
   sample_names <- c(sample_names, "NTC")
+  plotting_names <- str_trunc(sample_names, width = 15, side = "center", ellipsis = "\U2026")
   length(sample_names) <- nrow(plate)
+  length(plotting_names) <- nrow(plate)
 
   plate |>
-    dplyr::mutate(sample_name = sample_names) |>
+    dplyr::mutate(sample_name = sample_names,
+                  plotting_name = plotting_names) |>
     tidyr::unnest(cols = data) |>
     dplyr::group_by(sample, primer) |>
     dplyr::arrange(dplyr::desc(row), col) |>
     dplyr::mutate(sample_name = dplyr::if_else(!is.na(primer) & dplyr::row_number() == 2, sample_name, NA_character_),
-           sample = as.factor(sample))
+                  plotting_name = dplyr::if_else(!is.na(primer) & dplyr::row_number() == 2, plotting_name, NA_character_),
+                  sample = as.factor(sample))
 }
 
 add_primer_names <- function(plate, primer_names) {
@@ -230,5 +235,5 @@ add_primer_names <- function(plate, primer_names) {
     dplyr::group_by(primer) |>
     dplyr::arrange(lane_v, dplyr::desc(row), col) |>
     dplyr::mutate(primer_name = dplyr::if_else(dplyr::row_number() == 2, primer_name, NA_character_),
-           primer = as.factor(primer))
+                  primer = as.factor(primer))
 }
