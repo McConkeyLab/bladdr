@@ -2,17 +2,21 @@ plan_pcr <- function(data, n_primers, format = 384, exclude_border = TRUE,
                      primer_names = NULL, headless = TRUE, has_names = TRUE,
                      make_report = FALSE, file_path = NULL) {
 
-  data <- tibble::as_tibble(data)
-
-  format <- match.arg(as.character(format), c("96", "384"))
-
   # TODO
-  # Should probably include ... in middle of long string in both here and plan-pcr for display purposes.
   # Add documentation (previously comments) to their respective functions
 
+  # Checks ---------------------------------------------------------------------
   if (!headless) {
     browseURL("https://kai-a.shinyapps.io/plan-pcr/")
     return(invisible())
+  }
+
+  format <- match.arg(as.character(format), c("96", "384"))
+
+  data <- tibble::as_tibble(data) # Allows for vector input
+
+  if (ncol(data) == 1 & has_names) {
+    stop("Data only has one column - did you mean `has_names = FALSE`?")
   }
 
   # Experimental constants -----------------------------------------------------
@@ -23,7 +27,7 @@ plan_pcr <- function(data, n_primers, format = 384, exclude_border = TRUE,
   rna_per_well <- 2#uL Vol RNA/well
 
   # Runtime constants ----------------------------------------------------------
-  sample_names <- data  |>
+  sample_names <- data |>
     get_sample_names(has_names)
 
   if (!has_names) {
@@ -52,7 +56,7 @@ plan_pcr <- function(data, n_primers, format = 384, exclude_border = TRUE,
     pn[1:length(primer_names)] <- primer_names
   }
 
-  ## Make sections -------------------------------------------------------------
+  # Make sections --------------------------------------------------------------
   if (n_primers > max_sections_before_flow) {
     plate <- this_plate |>
       denote_vlane(plate_dims, reps) |>
@@ -90,7 +94,8 @@ plan_pcr <- function(data, n_primers, format = 384, exclude_border = TRUE,
 
   if (make_report) {
     if (missing(file_path)) {
-      file_path <- tempfile(pattern = paste0(Sys.Date(), "_pcr-report_"), fileext = ".html")
+      file_path <- tempfile(pattern = paste0(Sys.Date(), "_pcr-report_"),
+                            fileext = ".html")
     }
 
     params <- list(sample_prep = sample_prep,
@@ -104,23 +109,39 @@ plan_pcr <- function(data, n_primers, format = 384, exclude_border = TRUE,
     rmarkdown::render("./R/pcr_report-template.Rmd", output_file = file_path,
                       params = params, envir = new.env(parent = globalenv()))
 
-    return(list(master_mix_prep = mm, sample_prep = sample_prep, plate = plate, report_path = file_path))
+    return(list(master_mix_prep = mm, sample_prep = sample_prep,
+                plate = plate, report_path = file_path))
   }
   list(master_mix_prep = mm, sample_prep = sample_prep, plate = plate)
 }
 
-useable_plate_dims <- function(plate) {
-  list(rows = length(unique(plate$row)),
-       cols = length(unique(plate$col)))
+#' Get or make sample names
+#'
+#' If the user did not supply sample names (`has_names = FALSE`), sample names
+#' will be generated in the form of "Sample_n".
+#'
+#' @param data A data.frame
+#' @param has_names logical. Should we expect sample names to be in the first
+#'   column?
+#'
+#' @return A vector of sample names
+#'
+#' @keywords internal
+get_sample_names <- function(data, has_names) {
+  if (has_names) data[[1]] else paste("Sample", 1:nrow(data))
 }
 
-plate_template <- function(n_row, n_col) {
-  tidyr::expand_grid(col = 1:n_col,
-                     row = letters[1:n_row]) |>
-    dplyr::mutate(row = as.factor(row) |> forcats::fct_rev(),
-                  col = as.factor(col))
-}
-
+#' Create a plate with given well format
+#'
+#' @param format integer. How many wells should this plate have?
+#' @param no_border logical. Will the user omit filling the edge wells of the
+#'   plate (to avoid edge effects)?
+#'
+#' @return A tibble with `col` (number, factor, denotes plate column from
+#'   left to right) and `row` (character, factor, denotes plate row from top to
+#'   bottom). If `no_border = TRUE`, the edges of the plate will not be included.
+#'
+#' @keywords internal
 get_plate <- function(format, no_border) {
   plate <- if (format == 96) plate_template(8, 12) else plate_template(16, 24)
   if (no_border & format == 96) {
@@ -135,6 +156,55 @@ get_plate <- function(format, no_border) {
   plate
 }
 
+#' Create a plate of given dimensions
+#'
+#' @param n_row integer. Number of rows plate should have.
+#' @param n_col integer. Number of columns plate should have.
+#'
+#' @return A tibble with `col` (a factor of numbers with the lowest being the
+#'   first and the highest being the last) and `row` (a factor of characters in
+#'   reverse alphabetical order, to mimic ordering in real world plates when
+#'   plotting)
+#'
+#' @keywords internal
+plate_template <- function(n_row, n_col) {
+  tidyr::expand_grid(col = 1:n_col,
+                     row = letters[1:n_row]) |>
+    dplyr::mutate(row = as.factor(row) |> forcats::fct_rev(),
+                  col = as.factor(col))
+}
+
+
+#' Get dimensions of plate that are allowed to be filled
+#'
+#' The 'useable' dimensions of the plate depends if the user has set
+#' `exclude_border` to be `TRUE` or `FALSE`. This calculates plate dimensions
+#' dependent on that.
+#'
+#' @param plate
+#'
+#' @return a named list, with integer values referring to the number of rows and
+#'   columns, respectively.
+#'
+#' @keywords internal
+useable_plate_dims <- function(plate) {
+  list(rows = length(unique(plate$row)),
+       cols = length(unique(plate$col)))
+}
+
+
+#' Calculate a sensible dilution factor
+#'
+#' If the volume of RNA to add is < 1uL, it must be diluted. Dilutions are easy
+#' to calculate in one's head only if they are integers (divisible by 5
+#' preferred). Further, this dilution should be as small as reasonably possible,
+#' otherwise it will become too dilute.
+#'
+#' @param vol_to_add numeric. 'Naive' volume to add, before dilution.
+#'
+#' @return an integer, either 1 (no dilution) or something divisible by 5.
+#'
+#' @keywords internal
 get_best_factor <- function(vol_to_add) {
   if (vol_to_add < 1) {
     exact_factor <- 1 / vol_to_add
@@ -145,12 +215,7 @@ get_best_factor <- function(vol_to_add) {
   as.integer(best_factor)
 }
 
-get_sample_names <- function(data, has_names) {
-  if (ncol(data) == 1 & has_names) {
-    stop("Data only has one column - did you mean `has_names = FALSE`?")
-  }
-  if (has_names) data[[1]] else paste("Sample", 1:nrow(data))
-}
+
 
 denote_vlane <- function(plate, plate_dims, reps) {
   n_lanes <- plate_dims$cols %/% reps
