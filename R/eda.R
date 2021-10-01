@@ -76,11 +76,18 @@ eda_two_gene <- function(dds, gene_x, gene_y, stratifier = NULL, assay = 2) {
 #' @export
 #'
 #'
-eda_one_gene <- function(dds, gene, stratifier = NULL, assay = 2) {
+eda_one_gene <- function(dds, gene, stratifier = NULL, assay = 2, label = NULL) {
+
+
 
   if (is.null(stratifier) &
       "clade" %in% colnames(SummarizedExperiment::colData(dds))) {
     stratifier <- "clade"
+  }
+
+  if (is.null(label) &
+      "cell" %in% colnames(SummarizedExperiment::colData(dds))) {
+    label <- "cell"
   }
 
   gene_ind <- get_gene_index(dds, gene)
@@ -95,7 +102,7 @@ eda_one_gene <- function(dds, gene, stratifier = NULL, assay = 2) {
                                  color = .data[[stratifier]])) +
     ggplot2::geom_point() +
     ggplot2::labs(y = gene, x = NULL) +
-    ggrepel::geom_text_repel(aes(label = .data$cell), nudge_x = 0.5) +
+    ggrepel::geom_text_repel(aes(label = .data[[label]]), nudge_x = 0.5) +
     theme_tufte() +
     ggplot2::theme(legend.position = "none")
 }
