@@ -1,3 +1,17 @@
+#' Plan PCR experiment
+#'
+#' @param data a data.frame, with samples as the first column (if  `has_names = TRUE`) and RNA concentrations as the second (or first, if `has_names = FALSE`)
+#' @param n_primers integer. Number of primers to be used in the experiment.
+#' @param format integer. 96 or 384 - the number of wells of the plate planned to be used
+#' @param exclude_border logical. Should the border be excluded to avoid edge effects? Default is TRUE.
+#' @param primer_names character vector. Names of primers.
+#' @param headless logical. If FALSE, return invisible and redirect to shiny application.
+#' @param has_names logical. Is the first column the names of the samples?
+#' @param make_report logical. Should an HTML report be written?
+#' @param file_path Optional path to where the report should be written, as well as the file name. Defaults to temp file.
+#'
+#' @return a list
+#' @export
 plan_pcr <- function(data, n_primers, format = 384, exclude_border = TRUE,
                      primer_names = NULL, headless = TRUE, has_names = TRUE,
                      make_report = FALSE, file_path = NULL) {
