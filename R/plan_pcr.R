@@ -255,7 +255,7 @@ flow_lanes <- function(plate, n_primers, n_samples, ntc, reps) {
   primers <- rep(1:n_primers, each = total_samples * reps)
   length(primers) <- nrow(plate)
   dplyr::arrange(plate, .data$lane_v, dplyr::desc(.data$row)) |>
-    dplyr::mutate(primer = .data$primers,
+    dplyr::mutate(primer = primers,
                   primer = dplyr::if_else(.data$primer <= n_primers,
                                           .data$primer,
                                           NA_integer_),
