@@ -21,9 +21,9 @@ Make a volcano plot from a dds results
 }
 \examples{
 
-DESeq2::makeExampleDESeqDataSet(n = 100, m = 6, betaSD = 1) \%>\%
-DESeq2::DESeq() \%>\%
-DESeq2::results() \%>\%
+DESeq2::makeExampleDESeqDataSet(n = 50, m = 3, betaSD = 1) |>
+DESeq2::DESeq() |>
+DESeq2::results() |>
 volcano_plot(lfc = 1)
 
 }
