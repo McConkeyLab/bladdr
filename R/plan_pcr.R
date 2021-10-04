@@ -120,7 +120,7 @@ plan_pcr <- function(data, n_primers, format = 384, exclude_border = TRUE,
                    format = format,
                    exclude_border = exclude_border)
 
-    rmarkdown::render("./R/pcr_report-template.Rmd", output_file = file_path,
+    rmarkdown::render("./inst/pcr_report-template.Rmd", output_file = file_path,
                       params = params, envir = new.env(parent = globalenv()))
 
     return(list(master_mix_prep = mm, sample_prep = sample_prep,
