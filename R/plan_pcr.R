@@ -21,7 +21,7 @@ plan_pcr <- function(data, n_primers, format = 384, exclude_border = TRUE,
 
   # Checks ---------------------------------------------------------------------
   if (!headless) {
-    browseURL("https://kai-a.shinyapps.io/plan-pcr/")
+    utils::browseURL("https://kai-a.shinyapps.io/plan-pcr/")
     return(invisible())
   }
 
@@ -89,16 +89,16 @@ plan_pcr <- function(data, n_primers, format = 384, exclude_border = TRUE,
 
   # Sample preparation  --------------------------------------------------------
   sample_prep <- data |>
-    dplyr::mutate(vol_to_add = final_rna_conc * final_vol / data[[2]]) |>
+    dplyr::mutate(vol_to_add = .data$final_rna_conc * .data$final_vol / data[[2]]) |>
     dplyr::rowwise() |>
-    dplyr::mutate(dilution_factor = get_best_factor(vol_to_add)) |>
+    dplyr::mutate(dilution_factor = get_best_factor(.data$vol_to_add)) |>
     dplyr::ungroup() |>
-    dplyr::mutate(diluted_concentration = data[[2]] / dilution_factor,
-                  final_vol = final_vol,
-                  diluted_rna_to_add = final_rna_conc * final_vol / diluted_concentration,
-                  water_to_add = final_vol - diluted_rna_to_add) |>
-    dplyr::select(-vol_to_add) |>
-    dplyr::relocate(final_vol, .after = dplyr::last_col())
+    dplyr::mutate(diluted_concentration = data[[2]] / .data$dilution_factor,
+                  final_vol = .data$final_vol,
+                  diluted_rna_to_add = .data$final_rna_conc * .data$final_vol / .data$diluted_concentration,
+                  water_to_add = .data$final_vol - .data$diluted_rna_to_add) |>
+    dplyr::select(-.data$vol_to_add) |>
+    dplyr::relocate(.data$final_vol, .after = dplyr::last_col())
 
   # Mastermix Preparation ------------------------------------------------------
   mm <- tibble::tibble(
@@ -160,10 +160,10 @@ get_plate <- function(format, no_border) {
   plate <- if (format == 96) plate_template(8, 12) else plate_template(16, 24)
   if (no_border & format == 96) {
     plate <- plate |>
-      dplyr::filter(!(col %in% c(1, 12) | row %in% c("a", "h")))
+      dplyr::filter(!(.data$col %in% c(1, 12) | .data$row %in% c("a", "h")))
   } else if (no_border & format == 384) {
     plate <- plate |>
-      dplyr::filter(!(col %in% c(1, 24) | row %in% c("a", "p")))
+      dplyr::filter(!(.data$col %in% c(1, 24) | .data$row %in% c("a", "p")))
   } else {
     plate
   }
@@ -184,8 +184,8 @@ get_plate <- function(format, no_border) {
 plate_template <- function(n_row, n_col) {
   tidyr::expand_grid(col = 1:n_col,
                      row = letters[1:n_row]) |>
-    dplyr::mutate(row = as.factor(row) |> forcats::fct_rev(),
-                  col = as.factor(col))
+    dplyr::mutate(row = as.factor(.data$row) |> forcats::fct_rev(),
+                  col = as.factor(.data$col))
 }
 
 
@@ -236,8 +236,8 @@ denote_vlane <- function(plate, plate_dims, reps) {
   wells_per_lane <- plate_dims$rows * reps
   lanes <- rep(1:n_lanes, each = wells_per_lane)
   length(lanes) <- nrow(plate) # Includes 'unusable' dims (ie borders of borderless)
-  dplyr::arrange(plate, col, dplyr::desc(row)) |>
-    dplyr::mutate(lane_v = lanes)
+  dplyr::arrange(plate, .data$col, dplyr::desc(.data$row)) |>
+    dplyr::mutate(lane_v = .data$lanes)
 }
 
 denote_hlane <- function(plate, plate_dims, n_samples, ntc) {
@@ -246,28 +246,28 @@ denote_hlane <- function(plate, plate_dims, n_samples, ntc) {
   wells_per_lane <- plate_dims$cols * total_samples
   lanes <- rep(1:num_lanes, each = wells_per_lane)
   length(lanes) <- nrow(plate)
-  dplyr::arrange(plate, dplyr::desc(row), col) |>
-    dplyr::mutate(lane_h = lanes)
+  dplyr::arrange(plate, dplyr::desc(.data$row), .data$col) |>
+    dplyr::mutate(lane_h = .data$lanes)
 }
 
 flow_lanes <- function(plate, n_primers, n_samples, ntc, reps) {
   total_samples <- n_samples + ntc
   primers <- rep(1:n_primers, each = total_samples * reps)
   length(primers) <- nrow(plate)
-  dplyr::arrange(plate, lane_v, dplyr::desc(row)) |>
-    dplyr::mutate(primer = primers,
-                  primer = dplyr::if_else(primer <= n_primers,
-                                          primer,
+  dplyr::arrange(plate, .data$lane_v, dplyr::desc(.data$row)) |>
+    dplyr::mutate(primer = .data$primers,
+                  primer = dplyr::if_else(.data$primer <= .data$n_primers,
+                                          .data$primer,
                                           NA_integer_),
                   available_well = TRUE)
 }
 
 section_lanes <- function(laned_plate, n_primers) {
   laned_plate |>
-    dplyr::mutate(primer = lane_h * 100 + lane_v) |> # Numerical hierarchy for ordering
-    dplyr::arrange(primer) |>
-    dplyr::group_by(primer) |>
-    dplyr::mutate(primer = dplyr::if_else(dplyr::cur_group_id() <= n_primers,
+    dplyr::mutate(primer = .data$lane_h * 100 + .data$lane_v) |> # Numerical hierarchy for ordering
+    dplyr::arrange(.data$primer) |>
+    dplyr::group_by(.data$primer) |>
+    dplyr::mutate(primer = dplyr::if_else(dplyr::cur_group_id() <= .data$n_primers,
                                           dplyr::cur_group_id(),
                                           NA_integer_),
                   available_well = TRUE) |>
@@ -276,43 +276,43 @@ section_lanes <- function(laned_plate, n_primers) {
 
 add_sample_names <- function(plate, reps, sample_names) {
   plate <- plate |>
-    dplyr::group_by(primer) |>
-    dplyr::mutate(sample = (dplyr::row_number() + 2) %/% reps,
-                  sample = dplyr::if_else(!is.na(primer), sample, NA_real_)) |>
-    dplyr::group_by(sample) |>
+    dplyr::group_by(.data$primer) |>
+    dplyr::mutate(sample = (dplyr::row_number() + 2) %/% .data$reps,
+                  sample = dplyr::if_else(!is.na(.data$primer), .data$sample, NA_real_)) |>
+    dplyr::group_by(.data$sample) |>
     tidyr::nest() |>
     dplyr::ungroup()
 
   sample_names <- c(sample_names, "NTC")
-  plotting_names <- str_trunc(sample_names, width = 15, side = "center", ellipsis = "\U2026")
+  plotting_names <- stringr::str_trunc(sample_names, width = 15, side = "center", ellipsis = "\U2026")
   length(sample_names) <- nrow(plate)
   length(plotting_names) <- nrow(plate)
 
   plate |>
-    dplyr::mutate(sample_name = sample_names,
-                  plotting_name = plotting_names) |>
-    tidyr::unnest(cols = data) |>
-    dplyr::group_by(sample, primer) |>
-    dplyr::arrange(dplyr::desc(row), col) |>
-    dplyr::mutate(sample_name = dplyr::if_else(!is.na(primer) & dplyr::row_number() == 2, sample_name, NA_character_),
-                  plotting_name = dplyr::if_else(!is.na(primer) & dplyr::row_number() == 2, plotting_name, NA_character_),
-                  sample = as.factor(sample))
+    dplyr::mutate(sample_name = .data$sample_names,
+                  plotting_name = .data$plotting_names) |>
+    tidyr::unnest(cols = .data$data) |>
+    dplyr::group_by(sample, .data$primer) |>
+    dplyr::arrange(dplyr::desc(.data$row), .data$col) |>
+    dplyr::mutate(sample_name = dplyr::if_else(!is.na(.data$primer) & dplyr::row_number() == 2, .data$sample_name, NA_character_),
+                  plotting_name = dplyr::if_else(!is.na(.data$primer) & dplyr::row_number() == 2, .data$plotting_name, NA_character_),
+                  sample = as.factor(.data$sample))
 }
 
 add_primer_names <- function(plate, primer_names) {
   plate <- plate |>
-    dplyr::group_by(primer) |>
+    dplyr::group_by(.data$primer) |>
     tidyr::nest() |>
-    dplyr::arrange(primer) |>
+    dplyr::arrange(.data$primer) |>
     dplyr::ungroup()
 
   length(primer_names) <- nrow(plate) # Account for any NAs (that may or may not be present)
 
   plate |>
-    dplyr::mutate(primer_name = primer_names) |>
-    tidyr::unnest(cols = data) |>
-    dplyr::group_by(primer) |>
-    dplyr::arrange(lane_v, dplyr::desc(row), col) |>
-    dplyr::mutate(primer_name = dplyr::if_else(dplyr::row_number() == 2, primer_name, NA_character_),
-                  primer = as.factor(primer))
+    dplyr::mutate(primer_name = .data$primer_names) |>
+    tidyr::unnest(cols = .data$data) |>
+    dplyr::group_by(.data$primer) |>
+    dplyr::arrange(.data$lane_v, dplyr::desc(.data$row), .data$col) |>
+    dplyr::mutate(primer_name = dplyr::if_else(dplyr::row_number() == 2, .data$primer_name, NA_character_),
+                  primer = as.factor(.data$primer))
 }

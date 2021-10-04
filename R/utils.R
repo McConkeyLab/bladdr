@@ -13,6 +13,11 @@ get_gene_index <- function(dds, genes) {
 }
 
 #' Get expression of gene by indices in a dds
+#'
+#' @param dds A DESeqDataSet
+#' @param gene_indices integer vector that refer to the row number of genes to retrieve
+#' @param assay integer, assay index that refers to the desired expression data slot
+#'
 #' @return A dataframe where row names are sample names, and column names are
 #'   gene names
 #'

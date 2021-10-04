@@ -4,7 +4,7 @@
 \alias{eda_one_gene}
 \title{Plot the expression of one gene across a stratifying argument}
 \usage{
-eda_one_gene(dds, gene, stratifier = NULL, assay = 2)
+eda_one_gene(dds, gene, stratifier = NULL, assay = 2, label = NULL)
 }
 \arguments{
 \item{dds}{A \code{DESeqDataSet} object}
@@ -15,6 +15,8 @@ eda_one_gene(dds, gene, stratifier = NULL, assay = 2)
 as the x-axis to stratify gene expression into groups}
 
 \item{assay}{The index of the assay that contains the normalized counts.}
+
+\item{label}{character. Column to label points with}
 }
 \value{
 A ggplot

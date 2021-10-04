@@ -71,6 +71,7 @@ eda_two_gene <- function(dds, gene_x, gene_y, stratifier = NULL, assay = 2) {
 #' @param stratifier A name of a column of the `dds` `colData` that will be used
 #'   as the x-axis to stratify gene expression into groups
 #' @param assay The index of the assay that contains the normalized counts.
+#' @param label character. Column to label points with
 #'
 #' @return A ggplot
 #' @export
