@@ -34,7 +34,7 @@ get_gene_expression <- function(dds, gene_indices, assay) {
 #' @param font_size numeric. Size of `element_text` font.
 #'
 #' @return A ggplot theme
-#' @noRd
+#' @export
 theme_tufte <- function(font_size = 30) {
 
   if (Sys.info()[["sysname"]] == "Windows") {
@@ -55,4 +55,61 @@ theme_tufte <- function(font_size = 30) {
     legend.key = ggplot2::element_blank(),
     text = ggplot2::element_text(family = font, size = font_size)
   )
+}
+
+
+
+#' Calculate dilution from known concentrations
+#'
+#' @param c1 numeric. Initial concentration of sample.
+#' @param c2 numeric. Target concentration of sample.
+#' @param v2 numeric. Target final volume of sample. If `round_for_pipettes = TRUE`, assumes volume is mL
+#' @param round_for_pipettes logical. If TRUE, rounds values to the accuracy of standard pipettes.
+#'
+#' @return a named list, with `sample_to_add` as the volume of sample to add, and `add_to` as the volume to dilute the sample into.
+#' @export
+#'
+#' @examples
+#' dilute(203, 70, 10)
+#' dilute(203, 70, 10, round_for_pipettes = FALSE)
+#'
+dilute <- function(c1, c2, v2, round_for_pipettes = TRUE) {
+  if (c2 > c1) {
+    warning("This dilution is impossible without concentrating the sample.")
+  }
+
+  v1 <- c2 * v2 / c1
+  add_to <- v2-v1
+
+  if (round_for_pipettes == TRUE) {
+    v1 <- make_pipette_vol(v1)
+    add_to <- make_pipette_vol(add_to)
+  }
+
+  list(sample_to_add = v1, add_to = add_to)
+}
+
+#' Round volume to be pipette-compatible
+#'
+#' @param vol numeric. Volume to be rounded
+#'
+#' @return numeric. Rounded volume.
+#' @export
+#'
+#' @examples
+#' make_pipette_vol(104.13398)
+#' make_pipette_vol(15.3331)
+#' make_pipette_vol(9.9211)
+#'
+make_pipette_vol <- function(vol) {
+  if (vol > 200) {
+    vol <- round(vol)
+  } else if (vol > 20) {
+    vol <- round(vol/2, 1) * 2
+  } else if (vol > 10) {
+    vol <- round(vol/2, 2) * 2
+  } else {
+    vol <- round(vol, 2)
+  }
+  vol
 }
