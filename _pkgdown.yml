@@ -2,7 +2,6 @@ reference:
 - title: "PCR"
   desc: "Functions for planning, tidying, analyzing, and visualizing PCR experiments"
 - contents:
-  - plan_pcr
   - starts_with("pcr")
 - title: "Exploratory Data Analysis"
   desc: "Functions for rapid data exploration."
