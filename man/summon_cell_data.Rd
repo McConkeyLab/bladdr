@@ -12,3 +12,6 @@ a DDS containing cell-line RNA expression
 \description{
 Summon cell line data
 }
+\details{
+This function requires access to the GBCI SharePoint.
+}

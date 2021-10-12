@@ -32,17 +32,29 @@ get_gene_expression <- function(dds, gene_indices, assay) {
 #' ggplot theme in the style of Edward Tufte
 #'
 #' @param font_size numeric. Size of `element_text` font.
+#' @param use_gillsans logical. Should Gill Sans be used for the plot?
 #'
 #' @return A ggplot theme
 #' @export
-theme_tufte <- function(font_size = 30) {
+#'
+#' @examples
+#' library(ggplot2)
+#'
+#' ggplot(dummy_rna_conc, aes(x = sample, y = conc)) +
+#'   geom_point() +
+#'   theme_tufte(10, use_gillsans = FALSE)
+theme_tufte <- function(font_size = 30, use_gillsans = TRUE) {
 
-  if (Sys.info()[["sysname"]] == "Windows") {
-    font <- "Gill Sans MT"
-  } else if (Sys.info()[["sysname"]] == "Darwin") {
-    font <- "Gill Sans"
+  if (use_gillsans) {
+    if (Sys.info()[["sysname"]] == "Windows") {
+      font <- "Gill Sans MT"
+    } else if (Sys.info()[["sysname"]] == "Darwin") {
+      font <- "Gill Sans"
+    } else {
+      font <- "Arial"
+    }
   } else {
-    font <- "Arial"
+    font <- "sans"
   }
 
   ggplot2::theme(
@@ -64,7 +76,7 @@ theme_tufte <- function(font_size = 30) {
 #' @param c1 numeric. Initial concentration of sample.
 #' @param c2 numeric. Target concentration of sample.
 #' @param v2 numeric. Target final volume of sample. If `round_for_pipettes = TRUE`, assumes volume is mL
-#' @param round_for_pipettes logical. If TRUE, rounds values to the accuracy of standard pipettes.
+#' @param round_for_pipettes logical. If TRUE, rounds values to the accuracy of standard pipettes using `make_pipette_vol`.
 #'
 #' @return a named list, with `sample_to_add` as the volume of sample to add, and `add_to` as the volume to dilute the sample into.
 #' @export

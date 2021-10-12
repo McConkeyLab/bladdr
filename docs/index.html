@@ -83,30 +83,17 @@
 <div class="page-header"><h1 class="hasAnchor">
 <a href="#bladdr-a-helping-hand-in-mcconkey-land-" class="anchor"></a>bladdr: A Helping Hand in McConkey Land <img src="reference/figures/logo.png" align="right" height="139">
 </h1></div>
-<p>bladdr’s vision is to be a package that can automate everyday days in small functions that don’t try to do too much.</p>
+<p>bladdr is a ‘miscellaneous’ toolbox made for the McConkey lab, but useful to many who do routine lab tasks. Its vision is to be a package that can automate everyday days in small functions that don’t try to do too much.</p>
 </div>
-<div id="guiding-principles" class="section level1">
+<div id="overview" class="section level1">
 <h1 class="hasAnchor">
-<a href="#guiding-principles" class="anchor"></a>Guiding Principles</h1>
-<div id="reproducibility" class="section level2">
-<h2 class="hasAnchor">
-<a href="#reproducibility" class="anchor"></a>Reproducibility</h2>
-<p>Human GUI interaction should be minimized to prevent undocumented variables. Documentation should be automatic when possible - realistically, if something is a hassle to do it will likely not be done.</p>
-</div>
-<div id="clarity" class="section level2">
-<h2 class="hasAnchor">
-<a href="#clarity" class="anchor"></a>Clarity</h2>
-<p>Functions should strive to be simple over elegant when one must be decided over the other. Functions should be allowed to be opinionated about the input of data, as the input format is often not optimal for working with.</p>
+<a href="#overview" class="anchor"></a>Overview</h1>
+<p>Generally, bladdr has several ‘groups’ of functions</p>
 <ul>
-<li>However, input data should not be removed without precedent, only reshaped or refactored. The goal of these functions is to have the be able to be peppered in to every day workflows. Therefore they must be flexible and humble in their function, lest someone want to use them in a different way.</li>
-<li>For now, until it causes problems, we will assume that the tidyverse exists and use of it in our package will be encouraged for the sake of piping and clarity.</li>
+<li><p>PCR functions, used to plan, analyze, and visualize the results of both ddPCR experiments and RNA library quantification PCR.</p></li>
+<li><p>EDA functions, which take a <code>SummarizedExperiment</code> object to visualize expression of gene(s) across optional strata</p></li>
+<li><p>Helpers, like <code>dilute</code>, <code>make_pipette_vol</code>, <code>theme_tufte</code>, and others.</p></li>
 </ul>
-</div>
-<div id="modularization" class="section level2">
-<h2 class="hasAnchor">
-<a href="#modularization" class="anchor"></a>Modularization</h2>
-<p>Functions should only do one thing: creating two small functions, one which feeds into the other, is preferred over one larger function</p>
-</div>
 </div>
 
   </div>

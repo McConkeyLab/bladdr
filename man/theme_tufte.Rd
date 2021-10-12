@@ -4,14 +4,23 @@
 \alias{theme_tufte}
 \title{ggplot theme in the style of Edward Tufte}
 \usage{
-theme_tufte(font_size = 30)
+theme_tufte(font_size = 30, use_gillsans = TRUE)
 }
 \arguments{
 \item{font_size}{numeric. Size of \code{element_text} font.}
+
+\item{use_gillsans}{logical. Should Gill Sans be used for the plot?}
 }
 \value{
 A ggplot theme
 }
 \description{
 ggplot theme in the style of Edward Tufte
+}
+\examples{
+library(ggplot2)
+
+ggplot(dummy_rna_conc, aes(x = sample, y = conc)) +
+  geom_point() +
+  theme_tufte(10, use_gillsans = FALSE)
 }

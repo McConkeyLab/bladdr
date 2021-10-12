@@ -1,0 +1,20 @@
+reference:
+- title: "PCR"
+  desc: "Functions for planning, tidying, analyzing, and visualizing PCR experiments"
+- contents:
+  - plan_pcr
+  - starts_with("pcr")
+- title: "Exploratory Data Analysis"
+  desc: "Functions for rapid data exploration."
+- contents:
+  - starts_with("eda")
+- title: "Utilities"
+  desc: "Misc. quality of life functions."
+- contents:
+  - dilute
+  - dummy_rna_conc
+  - get_gene_expression
+  - make_pipette_vol
+  - summon_cell_data
+  - theme_tufte
+  - volcano_plot

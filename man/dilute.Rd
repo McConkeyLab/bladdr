@@ -13,7 +13,7 @@ dilute(c1, c2, v2, round_for_pipettes = TRUE)
 
 \item{v2}{numeric. Target final volume of sample. If \code{round_for_pipettes = TRUE}, assumes volume is mL}
 
-\item{round_for_pipettes}{logical. If TRUE, rounds values to the accuracy of standard pipettes.}
+\item{round_for_pipettes}{logical. If TRUE, rounds values to the accuracy of standard pipettes using \code{make_pipette_vol}.}
 }
 \value{
 a named list, with \code{sample_to_add} as the volume of sample to add, and \code{add_to} as the volume to dilute the sample into.

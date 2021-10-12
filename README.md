@@ -1,20 +1,15 @@
 # bladdr: A Helping Hand in McConkey Land <img src='man/figures/logo.png' align="right" height="139" />
 
-bladdr's vision is to be a package that can automate everyday days in small functions that don't try to do too much. 
+bladdr is a 'miscellaneous' toolbox made for the McConkey lab, but useful to many who do routine lab tasks. Its vision is to be a package that can automate everyday days in small functions that don't try to do too much. 
 
-# Guiding Principles
+# Overview
 
-## Reproducibility
+Generally, bladdr has several 'groups' of functions
 
-Human GUI interaction should be minimized to prevent undocumented variables. Documentation should be automatic when possible - realistically, if something is a hassle to do it will likely not be done. 
+- PCR functions, used to plan, analyze, and visualize the results of both ddPCR experiments and RNA library quantification PCR.
 
-## Clarity
+- EDA functions, which take a `SummarizedExperiment` object to visualize expression of gene(s) across optional strata
 
-Functions should strive to be simple over elegant when one must be decided over the other.
-Functions should be allowed to be opinionated about the input of data, as the input format is often not optimal for working with.
-* However, input data should not be removed without precedent, only reshaped or refactored. The goal of these functions is to have the be able to be peppered in to every day workflows. Therefore they must be flexible and humble in their function, lest someone want to use them in a different way.
-* For now, until it causes problems, we will assume that the tidyverse exists and use of it in our package will be encouraged for the sake of piping and clarity.
+- Helpers, like `dilute`, `make_pipette_vol`, `theme_tufte`, and others.
 
-## Modularization
 
-Functions should only do one thing: creating two small functions, one which feeds into the other, is preferred over one larger function
