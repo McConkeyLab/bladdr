@@ -38,6 +38,8 @@ eda_n_gene <- function(dds, genes, stratifier = NULL, assay = 2) {
 #' @param assay integer. Assay position in the supplied `dds` that corresponds
 #'   to normalized counts.
 #'
+#' @importFrom ggplot2 aes
+#'
 #' @return a ggplot
 #' @export
 #'
@@ -72,6 +74,8 @@ eda_two_gene <- function(dds, gene_x, gene_y, stratifier = NULL, assay = 2) {
 #'   as the x-axis to stratify gene expression into groups
 #' @param assay The index of the assay that contains the normalized counts.
 #' @param label character. Column to label points with
+#'
+#' @importFrom ggplot2 aes
 #'
 #' @return A ggplot
 #' @export

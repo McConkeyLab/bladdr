@@ -4,9 +4,7 @@ bladdr is a 'miscellaneous' toolbox made for the McConkey lab, but useful to man
 
 # Overview
 
-Generally, bladdr has several 'groups' of functions
-
-- PCR functions, used to plan, analyze, and visualize the results of both ddPCR experiments and RNA library quantification PCR.
+Currently, bladdr has two 'groups' of functions
 
 - EDA functions, which take a `SummarizedExperiment` object to visualize expression of gene(s) across optional strata
 
