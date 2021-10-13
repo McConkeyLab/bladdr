@@ -540,7 +540,7 @@ pcr_plan <- function(data, n_primers, format = 384, exclude_border = TRUE,
 
   # Mastermix Preparation ------------------------------------------------------
   mm <- tibble::tibble(
-    reagent = c("2X RT-PCR Buffer", "Primer", "25X Enzyme Mix", "Nuclease Free H2O"),
+    reagent = c("2X RT-PCR Buffer", "Primer", "25X RT-PCR Enzyme", "Nuclease Free H2O"),
     vol = c(6.25, .625, .5, 3.125) * (n_samples + ntc + 2) * reps
   )
 
