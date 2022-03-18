@@ -48,7 +48,7 @@ theme_tufte <- function(font_size = 30, use_gillsans = TRUE) {
   if (use_gillsans) {
     if (Sys.info()[["sysname"]] == "Windows") {
       font <- "Gill Sans MT"
-    } else if (Sys.info()[["sysname"]] == "Darwin") {
+    } else if (Sys.info()[["sysname"]] %in% c("Darwin", "Linux")) {
       font <- "Gill Sans"
     } else {
       font <- "Arial"
