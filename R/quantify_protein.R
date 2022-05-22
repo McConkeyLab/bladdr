@@ -1,274 +1,237 @@
-library(tidyverse)
-library(parsnip)
-library(readxl)
-library(shiny)
-library(broom)
+
+# Reading in data --------------------------------------------------------------
+
+#' Read in data into a common quantify protein format
+#'
+#' @param x A `gp`, `data.frame`/`tibble`, or character path to a raw SpectraMAX .xls
+#' @param ... Unused
+#'
+#' @return A `gp`
+qp_read <- function(x, ...) {
+  UseMethod("qp_read")
+}
+
+#' @export
+#' @rdname qp_read
+qp_read.character <- function(x, ...) {
+  x <- x |>
+    readxl::read_excel()
+
+  # Check for 'temperature' to see if file is likely in its 'raw' form
+  if (!stringr::str_detect(colnames(x)[1], "Temperature")) {
+    rlang::warn("This file does not look like a raw SpectraMAX file. Results may be unreliable.")
+  }
+
+  x <- x |>
+    dplyr::select(-1) |>
+    rlang::set_names(NULL) |>
+    gp::as_gp()
+}
+
+#' @export
+#' @rdname qp_read
+qp_read.data.frame <- function(x, ...) {
+  gp::as_gp(x)
+}
+
+#' @export
+#' @rdname qp_read
+qp_read.gp <- function(x, ...) {
+  x
+}
+
+# Tidy qp gp according to replicate orientation --------------------------------
+
+qp_tidy <- function(x, replicate_orientation, max_unknowns) {
+  if (replicate_orientation == "v") {
+    nrow <- 3
+    ncol <- c(7, max_unknowns)
+    flow <- "row"
+    nrow2 <- 3
+    ncol2 <- 1
+  } else {
+    nrow <- c(7, max_unknowns)
+    ncol <- 3
+    flow <- "col"
+    nrow2 <- 1
+    ncol2 <- 3
+  }
+
+  x |>
+    gp::gp_sec(name = "sample_type", nrow, ncol, wrap = TRUE, flow = flow,
+               labels = c("standard", "unknown"), break_sections = FALSE) |>
+    gp::gp_sec(name = "index", nrow2, ncol2, break_sections = FALSE) |>
+    gp::gp_serve() |>
+    dplyr::mutate(conc = ifelse(index > 1, 2^(index - 5), 0),
+                  conc = ifelse(sample_type == "standard", conc, NA_real_))
+}
+
+# Calculate outlier-free absorbance means --------------------------------------
+
+qp_calc_abs_mean <- function(x) {
+  x |>
+    dplyr::group_by(.data$sample_type, .data$index, .data$conc) |>
+    tidyr::nest() |>
+    dplyr::mutate(mean_no_outlier = map(.data$data, find_mean)) |>
+    dplyr::select(-.data$data) |>
+    tidyr::unnest(.data$mean_no_outlier) |>
+    dplyr::group_by(.data$sample_type, .data$index) |>
+    dplyr::mutate(no_out_mean = mean(.data$value[!.data$is_suspect], na.rm = TRUE),
+                  no_out_sd = stats::sd(.data$value[!.data$is_suspect], na.rm = TRUE),
+                  keep = ifelse(abs(.data$value - .data$no_out_mean) > 3 * .data$no_out_sd, FALSE, TRUE),
+                  log_abs = log2(.data$value)) |>
+    dplyr::ungroup()
+}
+
+# Fit conc ~ abs using standards absorbances -----------------------------------
+
+qp_fit <- function(standards) {
+  fit_data <- standards |>
+    dplyr::mutate(log_conc = log2(conc + .5))
+
+  lm(log_conc ~ log_abs, data = fit_data)
+}
+
+# Predict concentrations from standards fit ------------------------------------
+qp_calc_conc <- function(x, fit) {
+  x |>
+    dplyr::bind_cols(.pred = predict(fit, x)) |>
+    tidyr::unnest(dplyr::everything()) |>
+    dplyr::group_by(.data$sample_type, .data$index) |>
+    dplyr::mutate(true_mean = ifelse(.data$sample_type == "standard", log2(.data$conc + 0.5), mean(.data$.pred[.data$keep])),
+                  pred_conc = (2^.data$true_mean) - .5)
+}
+
+# Calculate protein concentration ----------------------------------------------
 
 #' Quantify protein concentration from a MicroBCA assay
 #'
-#' @param x
+#' @param x A `gp` or `data.frame` containing absorbance values
 #' @param ...
 #'
-#' @return
-#' @export
+#' @details The standards must be in ascending concentration starting in the
+#'   upper left corner. Whether this is from from left to right or top to bottom
+#'   can be specified in 'replicate orientation'. Note that 'replicate
+#'   orientation' specified the direction that REPLICATES lie, NOT the direction
+#'   the samples flow (which will be opposite).
 #'
-#' @examples
-qp <- function(x, ...) {
-
-}
-
+#'
+#' @return a `tibble`
 #' @export
-#' @includeRmd quantify_protein
-qp.character <- function(x,
-                         replicate_orientation = c("h", "v"),
-                         target_conc  = 1.0,
-                         target_vol   = 15,
-                         sample_names = NULL,
-                         remove_empty = TRUE) {
+qp <- function(x, replicate_orientation = c("h", "v"), sample_names = NULL, remove_empty = TRUE) {
 
   replicate_orientation <- rlang::arg_match(replicate_orientation)
 
-  # Check if SpectraMAX File
+  abs <- qp_read(x)
 
-  abs <- read_spectramax_excel(x)
+  # Constants
+  max_samples <- gp::wells(abs) %/% 3
+  n_standards <- 7
+  max_unknowns <- max_samples - n_standards
 
-  # Theoretically I'd like to be able to work with it as a gp here
+  mean_abs <- abs |>
+    qp_tidy(replicate_orientation, max_unknowns) |>
+    qp_calc_abs_mean()
 
-  abs_tidy <- tidy_absorbances(absrb, replicate_orientation)
+  fit <- mean_abs |>
+    dplyr::filter(.data$sample_type == "standard") |>
+    dplyr::filter(.data$keep) |>
+    qp_fit()
 
-  abs_annot <- annotate_absorbances(tidy_abs)
+  conc <- qp_calc_conc(mean_abs, fit)
 
+  if (remove_empty) {
+    conc <- dplyr::filter(conc, .data$pred_conc > 0 | .data$sample_type == "standard")
+  }
 
+  if (!is.null(sample_names)) {
+    length(sample_names) <- max(conc$index, na.rm = TRUE) # Will return "NA" instead of erroring if sample names < # samples
+  } else {
+    sample_names <- as.character(1:max(conc$index, na.rm = TRUE))
+  }
 
-  list(absorbances = abs_annot)
+  qp <- conc |>
+    dplyr::mutate(sample_name = ifelse(.data$sample_type == "unknown", sample_names[.data$index], paste("Standard", .data$index)))
 
+  list(fit = fit, qp = qp, gp = abs)
 }
-
-qp_report <- function(qp) {
-  # Create report
-}
-
-
 
 find_mean <- function(df){
-  sample_hclust <- df$absrb |>
+  sample_hclust <- df$value |>
     dist() |>
     hclust()
   suspect_index <- sample_hclust$merge[nrow(df) - 1, 1] |>
     abs()
   df$is_suspect <- FALSE
   df$is_suspect[suspect_index] <- TRUE
-  tibble(absrb = df$absrb, is_suspect = df$is_suspect)
+  tibble::tibble(value = df$value, is_suspect = df$is_suspect)
 }
 
-read_spectramax_excel <- function(x) {
-  readxl::read_excel(x) |>
-    dplyr::select(-1) |>
-    rlang::set_names(NULL)
+#' Calculate dilutions for an analyzed `qp` `list`
+#'
+#' @param x The output of `qp()`
+#' @param target_conc Target concentration in (mg/mL) protein
+#' @param target_vol Target volume in uL
+#'
+#' @return A list, where the `qp` item has volumes of lysate and volumes of H2O to add.
+#' @export
+qp_calc_dil <- function(x, target_conc, target_vol) {
+  x$qp <- x$qp |>
+    rowwise() |>
+    mutate(.temp = list(dilute(pred_conc, target_conc, target_vol, quiet = TRUE))) |>
+    unnest_wider(.temp)
+  x
 }
 
-tidy_absorbances <- function(absorbances, replicate_orientation) {
-  if (replicate_orientation == "v") {
-    tidy_abs <- absrb |>
-      t()
-    tidy_abs <- tidy_abs[,1:6]
-    tidy_abs <- tidy_abs |>
-      tibble::as_tibble(.name_repair = "minimal") |>
-      rlang::set_names(c("1", "2", "3", "1", "2", "3"))
-    tidy_abs <- dplyr::bind_rows(tidy_abs[,1:3], tidy_abs[,4:6])
-  } else {
-    abs <- rlang::set_names(absrb, rep(1:3, times = 4))
-    tidy_abs <- dplyr::bind_rows(abs[, 1:3], abs[, 4:6], abs[, 7:9], abs[, 10:12])
+# Visualization ----------------------------------------------------------------
+
+make_qp_plate_view <- function(x) {
+  x$gp |>
+    gp::gp_plot(.data$value) +
+    ggplot2::geom_point(ggplot2::aes(color = value), size = 20) +
+    ggplot2::geom_text(ggplot2::aes(label = round(value, 2)), color = "black") +
+    ggplot2::scale_color_gradient(low = "darkseagreen1", high = "mediumpurple3")
+}
+
+make_qp_standard_plot <- function(x) {
+  ggplot(x$qp, aes(x = log_abs,
+                   y = true_mean,
+                   color = sample_type,
+                   shape = keep)) +
+    scale_color_viridis_d(option = "viridis", end = 0.8, direction = -1) +
+    geom_abline(intercept = x$fit$coefficients[1],
+                slope = x$fit$coefficients[2],
+                size = 2,
+                alpha = 0.2) +
+    geom_point(size = 3, alpha = 0.7) +
+    scale_shape_manual(values = c(4, 16)) +
+    labs(x = "Log2(Absorbance)", y = "Log2(Concentration + 0.5)")
+}
+
+# Report Generation ------------------------------------------------------------
+
+qp_report <- function(qp) {
+  # Create report
+  filename <- make_filename()
+  content <- function(file) {
+    temp_report = file.path("report.Rmd")
+    params = list(file = input$file,
+                  sample_orientation = input$replicate_orientation,
+                  remove_zero = input$remove_zero,
+                  target_vol = input$target_vol,
+                  target_conc = input$target_conc,
+                  samples = samples(),
+                  sample_summary = sample_summary(),
+                  standards = standards(),
+                  plate_heatmap = plate_heatmap(),
+                  std_plot = std_plot())
+    rmarkdown::render(temp_report, output_file = file,
+                      params = params, envir = new.env(parent = globalenv()))
   }
 }
 
-annotate_absorbances <- function(tidy_absorbances) {
-  tidy_abs <- tidy_abs |>
-    mutate(sample_type = c(rep("standard", times = 7), rep("sample", times = nrow(tidy_abs) - 7)),
-           id = row_number()) |>
-    pivot_longer(cols = -c(sample_type, id), names_to = "replicate", values_to = "absrb")
-
-  tidy_abs <- tidy_abs |>
-    mutate(conc = c(rep(c(0, 0.125, 0.250, 0.500, 1.000, 2.000, 4.000), each = 3),
-                    rep(NA, times = nrow(tidy_abs) - 21))) |>
-    group_by(id, sample_type, conc) |>
-    group_nest() |>
-    mutate(mean_no_outlier = map(data, find_mean)) |>
-    select(-data) |>
-    unnest(cols = c(mean_no_outlier)) |>
-    group_by(id) |>
-    mutate(no_out_mean = mean(absrb[!.data$is_suspect]),
-           no_out_sd = sd(absrb[!.data$is_suspect]),
-           keep = if_else(abs(absrb - no_out_mean) > 3 * no_out_sd, FALSE, TRUE),
-           log_conc = log2(conc + .5),
-           log_abs = log2(absrb))
-}
-}
-
-make_qp_heatmap <- function(qp) {
-  qp$absorbances |>
-    set_names(as.character(1:12)) |>
-    as_tibble() |>
-    mutate(row = LETTERS[1:8]) |>
-    pivot_longer(cols = -row, names_to = "column", values_to = "absorbance")
-}
-
-server <- function(input, output) {
-
-
-
-  dat_fit <- eventReactive({
-    input$file
-    input$replicate_orientation
-  },{
-    standards <- filter(dat_tidy(), sample_type == "standard", keep)
-
-    lm_fit <- lm(log_conc ~ log_abs, data = standards)
-
-    tidy_abs <- dat_tidy() |>
-      bind_cols(.pred = predict(lm_fit, dat_tidy())) |>
-      group_by(id) |>
-      mutate(true_mean = mean(.pred[.data$keep])) |>
-      mutate(pred_conc = (2^true_mean) - .5)
-  })
-
-  tidy_fit <- eventReactive({
-    input$file
-    input$replicate_orientation
-  },{
-    standards <- filter(dat_tidy(), sample_type == "standard", keep)
-
-    tidy_fit <- lm(log_conc ~ log_abs, data = standards) |>
-      tidy()
-  })
-
-  fit_data_filt <- eventReactive({
-    input$file
-    input$remove_zero
-    input$replicate_orientation
-  },{
-    if(input$remove_zero) {
-      filter(dat_fit(), pred_conc > 0 | sample_type == "standard")
-    } else{
-      dat_fit()
-    }
-  })
-
-  fit_data_named <- eventReactive({
-    input$file
-    input$remove_zero
-    input$replicate_orientation
-    input$sample_name
-  },{
-    name_list <- c("stnd_0.000", "stnd_0.125", "stnd_0.250", "stnd_0.500",
-                   "stnd_1.000", "stnd_2.000", "stnd_4.000",
-                   unlist(strsplit(input$sample_name, split = "; ", )))
-    with_names <- fit_data_filt() |>
-      mutate(sample_name = name_list[id],
-             sample_name = if_else(is.na(sample_name), as.character(cur_group_id()), sample_name))
-  })
-
-  standards <- eventReactive({
-    input$file
-    input$remove_zero
-    input$replicate_orientation
-  },{
-    fit_data_named() |>
-      filter(sample_type == "standard")
-  })
-
-  samples <- eventReactive({fit_data_named()},{
-    fit_data_named() |>
-      filter(sample_type == "sample")
-  })
-
-  sample_summary <- eventReactive({
-    input$file
-    input$remove_zero
-    input$replicate_orientation
-    input$target_conc
-    input$target_vol
-    input$sample_name
-  },{
-    samples() |>
-      ungroup() |>
-      select(sample_name, pred_conc, id) |>
-      group_by(sample_name, id) |>
-      summarize(`Concentration (mg/mL)` = mean(pred_conc)) |>
-      arrange(id) |>
-      mutate(`[Target] (mg/mL)` = input$target_conc,
-             `Target Volume (uL)` = input$target_vol,
-             `Lysate to Add (uL)` = round(`[Target] (mg/mL)` * `Target Volume (uL)`/`Concentration (mg/mL)`, 1),
-             `RIPA to Add (uL)` = as.character(round(`Target Volume (uL)` - `Lysate to Add (uL)`, 1)),
-             `Lysate to Add (uL)` = as.character(`Lysate to Add (uL)`))
-  }) # The 'as.character' conversion keeps formatter from adding padding 0s on the end
-
-
-  output$plate_heat <- renderPlot({
-    plate_heatmap()
-  }, width = 600)
-
-  std_plot <- reactive({
-    ggplot(samples(), aes(x = log_abs,
-                          y = true_mean,
-                          color = sample_type,
-                          shape = keep)) +
-      scale_color_viridis_d(option = "viridis", end = 0.8) +
-      geom_abline(intercept = tidy_fit()$estimate[1],
-                  slope = tidy_fit()$estimate[2],
-                  size = 2,
-                  alpha = 0.2) +
-      geom_point(size = 3, alpha = 0.7) +
-      geom_point(data = standards(),
-                 aes(y = log_conc),
-                 size = 3, alpha = 0.7) +
-      scale_shape_manual(values = c(4, 16)) +
-      labs(x = "Log2(Absorbance)", y = "Log2(Concentration + 0.5)") +
-      theme(legend.position = "bottom",
-            panel.background = element_blank(),
-            axis.ticks = element_blank())
-  })
-
-
-  plate_heatmap <- reactive({
-    temp <- absrb()
-    colnames(temp) <- sprintf('%0.2d', 1:ncol(temp))
-    cbind(`Row` = LETTERS[1:8], temp) |>
-      pivot_longer(cols = -`Row`, names_to = "Column", values_to = "abs") |>
-      mutate(Row = fct_rev(Row)) |>
-      ggplot(aes(Column, Row)) +
-      geom_point(aes(color = abs), size = 20) +
-      geom_text(aes(label = round(abs, 2))) +
-      scale_color_gradient(low = "darkseagreen1", high = "mediumpurple3") +
-      theme(legend.position = "none",
-            axis.title = element_blank(),
-            panel.background = element_blank())
-  })
-
-  make_filename <- eventReactive({input$file},{
-    file_name <- input$file$name |>
-      str_replace( "\\..*$", "_report.html")
-  })
-
-  output$get_report <- downloadHandler(
-    filename = function(){
-      make_filename()
-    },
-    content = function(file) {
-      temp_report = file.path("report.Rmd")
-      params = list(file = input$file,
-                    sample_orientation = input$replicate_orientation,
-                    remove_zero = input$remove_zero,
-                    target_vol = input$target_vol,
-                    target_conc = input$target_conc,
-                    samples = samples(),
-                    sample_summary = sample_summary(),
-                    standards = standards(),
-                    plate_heatmap = plate_heatmap(),
-                    std_plot = std_plot())
-      rmarkdown::render(temp_report, output_file = file,
-                        params = params, envir = new.env(parent = globalenv()))
-    }
-  )
-}
-
+#
+# make_filename <- eventReactive({input$file},{
+#   file_name <- input$file$name |>
+#     str_replace( "\\..*$", "_report.html")
+# })
