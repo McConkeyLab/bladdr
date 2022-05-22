@@ -1,8 +1,4 @@
 reference:
-- title: "PCR"
-  desc: "Functions for planning, tidying, analyzing, and visualizing PCR experiments"
-- contents:
-  - starts_with("pcr")
 - title: "Exploratory Data Analysis"
   desc: "Functions for rapid data exploration."
 - contents:
@@ -17,3 +13,5 @@ reference:
   - summon_cell_data
   - theme_tufte
   - volcano_plot
+template:
+  bootstrap: 5
