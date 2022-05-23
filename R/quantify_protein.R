@@ -72,7 +72,7 @@ qp_calc_abs_mean <- function(x) {
   x |>
     dplyr::group_by(.data$sample_type, .data$index, .data$conc) |>
     tidyr::nest() |>
-    dplyr::mutate(mean_no_outlier = map(.data$data, find_mean)) |>
+    dplyr::mutate(mean_no_outlier = purrr::map(.data$data, find_mean)) |>
     dplyr::select(-.data$data) |>
     tidyr::unnest(.data$mean_no_outlier) |>
     dplyr::group_by(.data$sample_type, .data$index) |>

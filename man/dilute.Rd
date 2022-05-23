@@ -4,7 +4,7 @@
 \alias{dilute}
 \title{Calculate dilution from known concentrations}
 \usage{
-dilute(c1, c2, v2, round_for_pipettes = TRUE)
+dilute(c1, c2, v2, round_for_pipettes = TRUE, quiet = FALSE)
 }
 \arguments{
 \item{c1}{numeric. Initial concentration of sample.}
