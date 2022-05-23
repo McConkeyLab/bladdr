@@ -99,7 +99,8 @@ qp_calc_conc <- function(x, fit) {
     tidyr::unnest(dplyr::everything()) |>
     dplyr::group_by(.data$sample_type, .data$index) |>
     dplyr::mutate(true_mean = ifelse(.data$sample_type == "standard", log2(.data$conc + 0.5), mean(.data$.pred[.data$keep])),
-                  pred_conc = (2^.data$true_mean) - .5)
+                  pred_conc = (2^.data$true_mean) - .5) |>
+    dplyr::ungroup()
 }
 
 # Calculate protein concentration ----------------------------------------------
