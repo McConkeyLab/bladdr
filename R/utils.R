@@ -28,7 +28,6 @@ get_gene_expression <- function(dds, gene_indices, assay) {
     t()
 }
 
-
 #' ggplot theme in the style of Edward Tufte
 #'
 #' @param font_size numeric. Size of `element_text` font.
@@ -45,16 +44,14 @@ get_gene_expression <- function(dds, gene_indices, assay) {
 #'   theme_tufte(10, use_gillsans = FALSE)
 theme_tufte <- function(font_size = 30, use_gillsans = TRUE) {
 
+  font <- "sans"
+
   if (use_gillsans) {
     if (Sys.info()[["sysname"]] == "Windows") {
       font <- "Gill Sans MT"
     } else if (Sys.info()[["sysname"]] %in% c("Darwin", "Linux")) {
       font <- "Gill Sans"
-    } else {
-      font <- "Arial"
     }
-  } else {
-    font <- "sans"
   }
 
   ggplot2::theme(
@@ -68,8 +65,6 @@ theme_tufte <- function(font_size = 30, use_gillsans = TRUE) {
     text = ggplot2::element_text(family = font, size = font_size)
   )
 }
-
-
 
 #' Calculate dilution from known concentrations
 #'

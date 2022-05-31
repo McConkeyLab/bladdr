@@ -1,6 +1,4 @@
-
 # Reading in data --------------------------------------------------------------
-
 #' Read in data into a common quantify protein format
 #'
 #' @param x A `gp`, `data.frame`/`tibble`, or character path to a raw SpectraMAX .xls
@@ -40,21 +38,58 @@ qp_read.gp <- function(x, ...) {
   x
 }
 
-# Tidy qp gp according to replicate orientation --------------------------------
+#' @export
+#' @rdname qp_read
+qp_read.spectramax <- function(x, ...) {
+  if (x$experiment_type != "pq") {
+    rlang::abort("Spectramax `experiment_type` is not `pq`")
+  }
 
-qp_tidy <- function(x, replicate_orientation, max_unknowns) {
+  x <- x$data$data[which(x$data$type == "plate")][[1]]
+
+  if (length(data) < 1) {
+    rlang::abort("No plate data found")
+  }
+
+  x
+}
+
+
+# Tidy qp gp according to replicate orientation --------------------------------
+qp_tidy.spectramax <- function(x, replicate_orientation, max_unknowns) {
   if (replicate_orientation == "v") {
-    nrow <- 3
+    nrow <- nrow2 <- 3
     ncol <- c(7, max_unknowns)
     flow <- "row"
-    nrow2 <- 3
     ncol2 <- 1
   } else {
     nrow <- c(7, max_unknowns)
-    ncol <- 3
+    ncol <- ncol2 <- 3
     flow <- "col"
     nrow2 <- 1
-    ncol2 <- 3
+  }
+
+  x |>
+    gp::gp_sec(name = "sample_type", nrow, ncol, wrap = TRUE, flow = flow,
+               labels = c("standard", "unknown"), break_sections = FALSE) |>
+    gp::gp_sec(name = "index", nrow2, ncol2, break_sections = FALSE) |>
+    gp::gp_serve() |>
+    dplyr::mutate(conc = ifelse(index > 1, 2^(index - 5), 0),
+                  conc = ifelse(sample_type == "standard", conc, NA_real_))
+}
+
+
+qp_tidy <- function(x, replicate_orientation, max_unknowns) {
+  if (replicate_orientation == "v") {
+    nrow <- nrow2 <- 3
+    ncol <- c(7, max_unknowns)
+    flow <- "row"
+    ncol2 <- 1
+  } else {
+    nrow <- c(7, max_unknowns)
+    ncol <- ncol2 <- 3
+    flow <- "col"
+    nrow2 <- 1
   }
 
   x |>
