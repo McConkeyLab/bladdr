@@ -30,17 +30,9 @@ qp_read.gp <- function(x, ...) {
 #' @export
 #' @rdname qp_read
 qp_read.spectramax <- function(x, ...) {
-  if (x$experiment_type != "pq") {
-    rlang::abort("Spectramax `experiment_type` is not `pq`")
-  }
+  if (x$experiment_type != "pq") rlang::abort("Spectramax `experiment_type` is not `pq`")
 
-  x <- x$data$data[which(x$data$type == "plate")][[1]]
-
-  if (length(data) < 1) {
-    rlang::abort("No plate data found")
-  }
-
-  x
+  x$data$data[which(x$data$type == "plate")][[1]]
 }
 
 
