@@ -1,7 +1,7 @@
 # Reading in data --------------------------------------------------------------
 #' Read in data into a common quantify protein format
 #'
-#' @param x A `gp`, `data.frame`/`tibble`, or character path to a raw SpectraMAX .xls
+#' @param x A `gp`, `data.frame`/`tibble`, or character path to a raw SPECTRAmax .xls(x)/.txt
 #' @param ... Unused
 #'
 #' @return A `gp`
@@ -12,18 +12,7 @@ qp_read <- function(x, ...) {
 #' @export
 #' @rdname qp_read
 qp_read.character <- function(x, ...) {
-  x <- x |>
-    readxl::read_excel()
-
-  # Check for 'temperature' to see if file is likely in its 'raw' form
-  if (!stringr::str_detect(colnames(x)[1], "Temperature")) {
-    rlang::warn("This file does not look like a raw SpectraMAX file. Results may be unreliable.")
-  }
-
-  x <- x |>
-    dplyr::select(-1) |>
-    rlang::set_names(NULL) |>
-    gp::as_gp()
+  mop::read_spectramax(x, ...) |> qp_read.spectramax()
 }
 
 #' @export
