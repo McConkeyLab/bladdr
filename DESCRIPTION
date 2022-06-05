@@ -15,7 +15,6 @@ Imports:
     readxl,
     ggplot2,
     dplyr,
-    magrittr,
     stringr,
     DESeq2,
     rlang,

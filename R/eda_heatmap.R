@@ -20,6 +20,6 @@ eda_heatmap <- function(dds, genes, stratifier = NULL, assay = 2, ...) {
         green_black_red <- grDevices::colorRampPalette(c("green", "black", "red"))
 
         filtered_genes <- dds[which(rownames(dds) %in% genes),]
-        norm_exp <- SummarizedExperiment::assay(filtered_genes, assay) %>%
+        norm_exp <- SummarizedExperiment::assay(filtered_genes, assay) |>
                 pheatmap::pheatmap(annotation_col = col_annot, scale = "row", color = green_black_red(10), border_color = NA, ...)
 }

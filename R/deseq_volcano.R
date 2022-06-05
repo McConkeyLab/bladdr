@@ -20,8 +20,8 @@ volcano_plot <- function(results, pval = 0.05, lfc = 0) {
 
         volcano_data <- data.frame(Gene = rownames(results),
                                    LFC = as.vector(results$log2FoldChange),
-                                   p_val = results$padj) %>%
-                dplyr::filter(stats::complete.cases(.)) %>%
+                                   p_val = results$padj) |>
+                dplyr::filter(stats::complete.cases(.)) |>
                 dplyr::mutate(neg_log_p = -log10(.data$p_val),
                               color = dplyr::case_when(
                                       .data$p_val < pval & abs(LFC) > lfc ~ "both",
