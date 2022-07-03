@@ -105,7 +105,8 @@ qp_tidy <- function(x, replicate_orientation, max_unknowns) {
                labels = c("standard", "unknown"), break_sections = FALSE) |>
     gp::gp_sec(name = "index", nrow2, ncol2, break_sections = FALSE) |>
     gp::gp_serve() |>
-    dplyr::mutate(conc = ifelse(index > 1, 2^(index - 5), 0),
+    dplyr::mutate(index = as.numeric(.data$index),
+                  conc = ifelse(index > 1, 2^(index - 5), 0),
                   conc = ifelse(sample_type == "standard", conc, NA_real_))
 }
 
