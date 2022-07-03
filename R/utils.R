@@ -70,8 +70,9 @@ theme_tufte <- function(font_size = 30, use_gillsans = TRUE) {
 #'
 #' @param c1 numeric. Initial concentration of sample.
 #' @param c2 numeric. Target concentration of sample.
-#' @param v2 numeric. Target final volume of sample. If `round_for_pipettes = TRUE`, assumes volume is mL
+#' @param v2 numeric. Target final volume of sample. If `round_for_pipettes = TRUE`, assumes volume is mL.
 #' @param round_for_pipettes logical. If TRUE, rounds values to the accuracy of standard pipettes using `make_pipette_vol`.
+#' @param quiet logical. If FALSE, will warn when dilution is impossible to do without concentrating sample.
 #'
 #' @return a named list, with `sample_to_add` as the volume of sample to add, and `add_to` as the volume to dilute the sample into.
 #' @export
