@@ -1,6 +1,6 @@
 #' Quantify protein concentration from a MicroBCA assay
 #'
-#' @param x A `gp`, or `data.frame`, or path to SPECTRAmax .xls(x)/.txt file.
+#' @param x A `spectramax`, `gp`, or `data.frame` object, or path to SPECTRAmax .xls(x)/.txt file.
 #' @param ...
 #'
 #' @details The standards must be in ascending concentration starting in the
@@ -171,7 +171,7 @@ qp_calc_dil <- function(x, target_conc, target_vol) {
   x$qp <- x$qp |>
     dplyr::rowwise() |>
     dplyr::mutate(.temp = list(dilute(pred_conc, target_conc, target_vol, quiet = TRUE))) |>
-    dplyr::unnest_wider(.temp)
+    tidyr::unnest_wider(.temp)
   x
 }
 
