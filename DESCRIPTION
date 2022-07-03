@@ -1,6 +1,6 @@
 Package: bladdr
 Title: A Helping Hand in McConkey Land
-Version: 0.0.10
+Version: 0.1.0
 Authors@R: 
     c(person(given = "Kai", family = "Aragaki", role = c("aut", "cre"), email = "aaragak1@jhmi.edu", comment = c(ORCID = "0000-0002-9458-0426")))
 Description: `bladdr` makes lab tasks less tedious and more reproducible.
