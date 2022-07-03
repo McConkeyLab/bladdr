@@ -173,7 +173,7 @@ qp_calc_conc <- function(x, fit) {
 qp_calc_dil <- function(x, target_conc, target_vol) {
   x$qp <- x$qp |>
     dplyr::rowwise() |>
-    dplyr::mutate(.temp = list(dilute(.data$pred_conc, .data$target_conc, .data$target_vol, quiet = TRUE))) |>
+    dplyr::mutate(.temp = list(dilute(.data$pred_conc, target_conc, target_vol, quiet = TRUE))) |>
     tidyr::unnest_wider(.data$.temp)
   x
 }
