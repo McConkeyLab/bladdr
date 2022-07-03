@@ -114,11 +114,11 @@ make_pipette_vol <- function(vol) {
   if (abs(vol) > 200) {
     vol <- round(vol)
   } else if (abs(vol) > 20) {
-    vol <- round(abs(vol)/2, 1) * 2
+    vol <- round(vol/2, 1) * 2
   } else if (abs(vol) > 10) {
-    vol <- round(abs(vol)/2, 2) * 2
+    vol <- round(vol/2, 2) * 2
   } else {
-    vol <- round(abs(vol), 2)
+    vol <- round(vol, 2)
   }
   vol
 }
