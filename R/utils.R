@@ -110,14 +110,15 @@ dilute <- function(c1, c2, v2, round_for_pipettes = TRUE, quiet = FALSE) {
 #' make_pipette_vol(9.9211)
 #'
 make_pipette_vol <- function(vol) {
-  if (vol > 200) {
+  if (is.na(vol)) return(vol)
+  if (abs(vol) > 200) {
     vol <- round(vol)
-  } else if (vol > 20) {
-    vol <- round(vol/2, 1) * 2
-  } else if (vol > 10) {
-    vol <- round(vol/2, 2) * 2
+  } else if (abs(vol) > 20) {
+    vol <- round(abs(vol)/2, 1) * 2
+  } else if (abs(vol) > 10) {
+    vol <- round(abs(vol)/2, 2) * 2
   } else {
-    vol <- round(vol, 2)
+    vol <- round(abs(vol), 2)
   }
   vol
 }
