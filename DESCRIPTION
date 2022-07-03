@@ -12,11 +12,8 @@ LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.0
 Imports: 
-    readxl,
     ggplot2,
     dplyr,
-    stringr,
-    DESeq2,
     rlang,
     tidyr,
     tibble,
@@ -25,12 +22,13 @@ Imports:
     ggrepel,
     pheatmap,
     grDevices,
-    gt,
+    Microsoft365R,
+    gp,
+    mop
+Suggests:
     knitr,
     rmarkdown,
-    forcats,
-    ragg,
-    Microsoft365R
+    DESeq2
 VignetteBuilder: knitr
 Depends: 
     R (>= 4.1)
