@@ -19,7 +19,7 @@ qp_read(x, ...)
 \method{qp_read}{spectramax}(x, ...)
 }
 \arguments{
-\item{x}{A \code{gp}, \code{data.frame}/\code{tibble}, or character path to a raw SpectraMAX .xls}
+\item{x}{A \code{gp}, \code{data.frame}/\code{tibble}, or character path to a raw SPECTRAmax .xls(x)/.txt}
 
 \item{...}{Unused}
 }

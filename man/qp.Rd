@@ -12,9 +12,13 @@ qp(
 )
 }
 \arguments{
-\item{x}{A \code{gp} or \code{data.frame} containing absorbance values}
+\item{x}{A \code{spectramax}, \code{gp}, or \code{data.frame} object, or path to SPECTRAmax .xls(x)/.txt file.}
 
-\item{...}{}
+\item{replicate_orientation}{Either 'h' or 'v' - see Details.}
+
+\item{sample_names}{Character vector of sample names.}
+
+\item{remove_empty}{Should wells that have less absorbance than the lowest standard be dropped?}
 }
 \value{
 a \code{tibble}
