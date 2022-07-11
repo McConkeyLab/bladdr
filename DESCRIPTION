@@ -22,7 +22,8 @@ Imports:
     grDevices,
     Microsoft365R,
     gp,
-    mop
+    mop,
+    drc
 Suggests:
     knitr,
     rmarkdown,

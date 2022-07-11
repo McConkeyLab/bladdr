@@ -10,22 +10,22 @@
 #'
 #' @return a `ggplot`
 #' @export
-mtt <- function(x, ...) {
-  UseMethod("mtt")
+mtt_calc <- function(x, ...) {
+  UseMethod("mtt_calc")
 }
 
-mtt.data.frame <- function(x, ...) {
+mtt_calc.data.frame <- function(x, ...) {
 
 }
 
-mtt.gp <- function(x, ...) {
+mtt_calc.gp <- function(x, ...) {
 
 }
 
 #' @export
-#' @rdname mtt
-mtt.spectramax <- function(spectramax, condition_names, drug_conc) {
-  rs$data[[1]]$data |>
+#' @rdname mtt_calc
+mtt_calc.spectramax <- function(x, condition_names, drug_conc, ...) {
+  x$data[[1]]$data |>
     gp::gp_sec("condition", nrow = 4, ncol = 6, labels = condition_names) |>
     gp::gp_sec("drug", nrow = 4, ncol = 1, labels = drug_conc, advance = FALSE) |>
     gp::gp_serve() |>
@@ -37,4 +37,24 @@ mtt.spectramax <- function(spectramax, condition_names, drug_conc) {
                   drug = ifelse(.data$drug == 0, 1e-12, .data$drug)) |>
     dplyr::group_by(.data$condition) |>
     dplyr::mutate(div = .data$diff/.data$mean[which(.data$drug == min(.data$drug))])
+}
+
+
+
+#' Plot MTT results
+#'
+#' @param mtt a `data.frame` output from  `mtt_calc()`
+#'
+#' @return a `ggplot`
+#' @export
+mtt_plot <- function(mtt) {
+  mtt |>
+    ggplot2::ggplot(ggplot2::aes(as.numeric(.data$drug),
+                                 .data$div,
+                                 color = .data$condition)) +
+    ggplot2::geom_point() +
+    ggplot2::scale_x_log10() +
+    ggplot2::geom_smooth(method = drc::drm,
+                         method.args = list(fct = drc::L.4(fixed = c(NA, NA, 1, NA))),
+                         se = FALSE)
 }
