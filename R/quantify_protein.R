@@ -84,7 +84,7 @@ qp_read.gp <- function(x, ...) {
 #' @export
 #' @rdname qp_read
 qp_read.spectramax <- function(x, ...) {
-  if (x$experiment_type != "pq") rlang::abort("Spectramax `experiment_type` is not `pq`")
+  if (!(562 %in% x$wavelengths)) rlang::warn("x$wavelengths does not contain 562")
 
   x$data$data[which(x$data$type == "plate")][[1]]
 }
