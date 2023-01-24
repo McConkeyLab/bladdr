@@ -28,6 +28,9 @@ Suggests:
     knitr,
     rmarkdown,
     DESeq2
+Remotes:
+  KaiAragaki/gp
+  KaiAragaki/mop
 VignetteBuilder: knitr
 biocViews:
 Depends: 
