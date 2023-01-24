@@ -29,5 +29,6 @@ Suggests:
     rmarkdown,
     DESeq2
 VignetteBuilder: knitr
+biocViews:
 Depends: 
     R (>= 4.1)
