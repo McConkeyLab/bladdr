@@ -29,7 +29,7 @@ Suggests:
     rmarkdown,
     DESeq2
 Remotes:
-  KaiAragaki/gp
+  KaiAragaki/gp,
   KaiAragaki/mop
 VignetteBuilder: knitr
 biocViews:
