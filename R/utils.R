@@ -81,7 +81,7 @@ theme_tufte <- function(font_size = 30, use_gillsans = TRUE) {
 #' dilute(203, 70, 10)
 #' dilute(203, 70, 10, round_for_pipettes = FALSE)
 #'
-dilute <- function(c1, c2, v2, round_for_pipettes = TRUE, quiet = FALSE) {
+dilute <- function(c1, c2 = min(c1), v2, round_for_pipettes = TRUE, quiet = FALSE) {
   if (any(c2 > c1) & !quiet) {
     warning("This dilution is impossible without concentrating the sample.")
   }
