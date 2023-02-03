@@ -82,16 +82,16 @@ theme_tufte <- function(font_size = 30, use_gillsans = TRUE) {
 #' dilute(203, 70, 10, round_for_pipettes = FALSE)
 #'
 dilute <- function(c1, c2, v2, round_for_pipettes = TRUE, quiet = FALSE) {
-  if (c2 > c1 & !quiet) {
+  if (any(c2 > c1) & !quiet) {
     warning("This dilution is impossible without concentrating the sample.")
   }
 
-  v1 <- c2 * v2 / c1
+  v1 <- sapply(c1, \(x) c2 * v2 / x)
   add_to <- v2-v1
 
   if (round_for_pipettes == TRUE) {
-    v1 <- make_pipette_vol(v1)
-    add_to <- make_pipette_vol(add_to)
+    v1 <- sapply(v1, make_pipette_vol)
+    add_to <- sapply(add_to, make_pipette_vol)
   }
 
   list(sample_to_add = v1, add_to = add_to)
