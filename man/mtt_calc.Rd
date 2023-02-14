@@ -2,10 +2,13 @@
 % Please edit documentation in R/mtt.R
 \name{mtt_calc}
 \alias{mtt_calc}
+\alias{mtt_calc.data.frame}
 \alias{mtt_calc.spectramax}
 \title{Make a plot from MTT data}
 \usage{
 mtt_calc(x, ...)
+
+\method{mtt_calc}{data.frame}(x, ...)
 
 \method{mtt_calc}{spectramax}(x, condition_names, drug_conc, ...)
 }

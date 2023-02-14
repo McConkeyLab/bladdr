@@ -130,11 +130,48 @@ make_pipette_vol <- function(vol) {
 #'
 #' @return Character. The local path of the downloaded file.
 #' @export
-get_gbci_file <- function(path){
+get_gbci_file <- function(path) {
   ext <- fs::path_ext(path)
   sp <- Microsoft365R::get_sharepoint_site(site_url = "https://livejohnshopkins.sharepoint.com/sites/GBCIStorage")
   drive <- sp$get_drive()
   temp <- fs::file_temp(ext = ext)
   drive$download_file(path, dest = temp)
   temp
+}
+
+#' Recursively download a directory from SharePoint
+#'
+#' @param path Path to the directory on SharePoint
+#' @param dest Path to where the file should be downloaded
+#'
+#' @return Returns `dest`
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' get_gbci_dir("Raw Data/SPECTRAmax/aragaki-kai/", "path/to/my/dir")
+#' }
+get_gbci_dir <- function(path, dest) {
+  sp <- Microsoft365R::get_sharepoint_site(site_url = "https://livejohnshopkins.sharepoint.com/sites/GBCIStorage")
+  drive <- sp$get_drive()
+  if (is.null(drive$get_item_properties(path)$folder)) {
+    stop("Specified path is not a directory")
+  }
+  items <- drive$list_items(path, full_names = TRUE)
+  dir.create(dest, recursive = TRUE)
+  apply(items, 1, get_recursive, drive = drive, og_path = path, dest = dest, simplify = FALSE)
+  dest
+}
+
+get_recursive <- function(item, drive, og_path, dest) {
+  top_dir <- stringr::str_extract(og_path, "[^/]*$")
+  save_path <- stringr::str_remove(item[["name"]], paste0(og_path, "?/"))
+  save_path <- fs::path(dest, top_dir, save_path)
+  if (as.logical(item[["isdir"]])) {
+    dir.create(save_path, recursive = TRUE)
+    items <- drive$list_items(item[["name"]], full_names = TRUE)
+    apply(items, 1, get_recursive, drive, og_path, dest, simplify = FALSE)
+  } else {
+    drive$download_file(item[["name"]], dest = save_path)
+  }
 }

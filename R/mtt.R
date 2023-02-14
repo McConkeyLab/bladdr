@@ -14,8 +14,18 @@ mtt_calc <- function(x, ...) {
   UseMethod("mtt_calc")
 }
 
+# Assume there are already condition and drug columns
+#' @export
+#' @rdname mtt_calc
 mtt_calc.data.frame <- function(x, ...) {
-
+  x |>
+    dplyr::filter(!is.na(as.character(condition))) |>
+    dplyr::group_by(.data$condition, .data$drug) |>
+    dplyr::mutate(diff = .data$nm562 - .data$nm660,
+                  mean = mean(.data$diff),
+                  drug = ifelse(.data$drug == 0, 1e-12, .data$drug)) |>
+    dplyr::group_by(.data$condition) |>
+    dplyr::mutate(div = .data$diff/.data$mean[which(.data$drug == min(.data$drug))])
 }
 
 mtt_calc.gp <- function(x, ...) {
