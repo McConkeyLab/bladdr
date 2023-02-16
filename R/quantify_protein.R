@@ -21,7 +21,7 @@ qp <- function(x, replicate_orientation = c("h", "v"), sample_names = NULL, remo
   abs <- qp_read(x)
 
   # Derived constants
-  max_samples <- gp::wells(abs) %/% 3
+  max_samples <- gplate::wells(abs) %/% 3
   n_standards <- 7
   max_unknowns <- max_samples - n_standards
 
@@ -72,7 +72,7 @@ qp_read.character <- function(x, ...) {
 #' @export
 #' @rdname qp_read
 qp_read.data.frame <- function(x, ...) {
-  gp::as_gp(x)
+  gplate::as_gp(x)
 }
 
 #' @export
@@ -104,10 +104,10 @@ qp_tidy <- function(x, replicate_orientation, max_unknowns) {
   }
 
   x |>
-    gp::gp_sec(name = "sample_type", nrow, ncol, wrap = TRUE, flow = flow,
+    gplate::gp_sec(name = "sample_type", nrow, ncol, wrap = TRUE, flow = flow,
                labels = c("standard", "unknown"), break_sections = FALSE) |>
-    gp::gp_sec(name = "index", nrow2, ncol2, break_sections = FALSE) |>
-    gp::gp_serve() |>
+    gplate::gp_sec(name = "index", nrow2, ncol2, break_sections = FALSE) |>
+    gplate::gp_serve() |>
     dplyr::mutate(index = as.numeric(.data$index),
                   conc = ifelse(.data$index > 1, 2^(.data$index - 5), 0),
                   conc = ifelse(.data$sample_type == "standard", .data$conc, NA_real_))
@@ -187,7 +187,7 @@ qp_calc_dil <- function(x, target_conc, target_vol) {
 #' @export
 make_qp_plate_view <- function(x) {
   x$gp |>
-    gp::gp_plot(.data$value) +
+    gplate::gp_plot(.data$value) +
     ggplot2::geom_point(ggplot2::aes(color = .data$value), size = 20) +
     ggplot2::geom_text(ggplot2::aes(label = round(.data$value, 2)), color = "black") +
     ggplot2::scale_color_gradient(low = "darkseagreen1", high = "mediumpurple3")

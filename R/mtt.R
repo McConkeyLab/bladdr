@@ -36,9 +36,9 @@ mtt_calc.gp <- function(x, ...) {
 #' @rdname mtt_calc
 mtt_calc.spectramax <- function(x, condition_names, drug_conc, ...) {
   x$data[[1]]$data |>
-    gp::gp_sec("condition", nrow = 4, ncol = 6, labels = condition_names) |>
-    gp::gp_sec("drug", nrow = 4, ncol = 1, labels = drug_conc, advance = FALSE) |>
-    gp::gp_serve() |>
+    gplate::gp_sec("condition", nrow = 4, ncol = 6, labels = condition_names) |>
+    gplate::gp_sec("drug", nrow = 4, ncol = 1, labels = drug_conc, advance = FALSE) |>
+    gplate::gp_serve() |>
     dplyr::filter(!is.na(as.character(condition))) |>
     dplyr::group_by(.data$condition, .data$drug) |>
     dplyr::mutate(diff = .data$nm562 - .data$nm660,
