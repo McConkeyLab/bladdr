@@ -4,13 +4,15 @@
 \alias{get_gbci_file}
 \title{Get a file from the GBCI SharePoint}
 \usage{
-get_gbci_file(path)
+get_gbci_file(path, dest = NULL)
 }
 \arguments{
 \item{path}{Path to file on SharePoint}
+
+\item{dest}{Where to put the file (and what to name it). Defaults to a temp file.}
 }
 \value{
-Character. The local path of the downloaded file.
+Character. The local path to the downloaded file.
 }
 \description{
 Get a file from the GBCI SharePoint

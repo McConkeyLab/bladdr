@@ -126,17 +126,23 @@ make_pipette_vol <- function(vol) {
 #' Get a file from the GBCI SharePoint
 #'
 #' @details This function requires access to the SharePoint in the first place.
-#' @param path Path to file on SharePoint
 #'
-#' @return Character. The local path of the downloaded file.
+#' @param path Path to file on SharePoint
+#' @param dest Where to put the file (and what to name it). Defaults to a temp file.
+#'
+#' @return Character. The local path to the downloaded file.
 #' @export
-get_gbci_file <- function(path) {
+get_gbci_file <- function(path, dest = NULL) {
   ext <- fs::path_ext(path)
   sp <- Microsoft365R::get_sharepoint_site(site_url = "https://livejohnshopkins.sharepoint.com/sites/GBCIStorage")
   drive <- sp$get_drive()
-  temp <- fs::file_temp(ext = ext)
-  drive$download_file(path, dest = temp)
-  temp
+
+  if (is.null(dest)) {
+    dest <- fs::file_temp(ext = ext)
+  }
+
+  drive$download_file(path, dest = dest)
+  dest
 }
 
 #' Recursively download a directory from SharePoint
