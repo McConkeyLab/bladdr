@@ -8,9 +8,9 @@
 \usage{
 mtt_calc(x, ...)
 
-\method{mtt_calc}{data.frame}(x, ...)
+\method{mtt_calc}{data.frame}(x, drug_conc, ic_pct = 50, ...)
 
-\method{mtt_calc}{spectramax}(x, condition_names, drug_conc, ...)
+\method{mtt_calc}{spectramax}(x, condition_names, drug_conc, ic_pct = 50, ...)
 }
 \arguments{
 \item{x}{A \code{data.frame}, \code{gp}, or \code{spectramax} object. See Details.}

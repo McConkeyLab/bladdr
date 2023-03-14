@@ -4,7 +4,7 @@
 \alias{mtt_plot}
 \title{Plot MTT results}
 \usage{
-mtt_plot(mtt)
+mtt_plot(mtt, plot_ics = FALSE)
 }
 \arguments{
 \item{mtt}{a \code{data.frame} output from  \code{mtt_calc()}}
