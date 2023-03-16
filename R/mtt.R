@@ -75,7 +75,8 @@ mtt_model <- function(data) {
   drc::drm(
     div ~ drug,
     data = data, fct = drc::LL.4(fixed = c(NA, NA, NA, NA)),
-    lowerl = c(-Inf, 0, -Inf, -Inf)
+    lowerl = c(-Inf, 0, -Inf, -Inf),
+    upperl = c(Inf, Inf, 1, Inf)
   )
 }
 
