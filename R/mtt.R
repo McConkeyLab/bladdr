@@ -21,16 +21,20 @@ mtt_calc.data.frame <- function(x, drug_conc, ic_pct = 50, ...) {
   x |>
     dplyr::filter(!is.na(as.character(.data$condition))) |>
     dplyr::group_by(.data$condition, .data$drug) |>
-    dplyr::mutate(diff = .data$nm562 - .data$nm660,
-                  mean = mean(.data$diff),
-                  drug = ifelse(.data$drug == 0, 1e-12, .data$drug)) |>
+    dplyr::mutate(
+      diff = .data$nm562 - .data$nm660,
+      mean = mean(.data$diff),
+      drug = ifelse(.data$drug == 0, 1e-12, .data$drug)
+    ) |>
     dplyr::group_by(.data$condition) |>
-    dplyr::mutate(div = .data$diff/.data$mean[which(.data$drug == min(.data$drug))]) |>
+    dplyr::mutate(div = .data$diff / .data$mean[which(.data$drug == min(.data$drug))]) |>
     dplyr::group_by(.data$condition) |>
     tidyr::nest() |>
-    dplyr::mutate(fit = purrr::map(.data$data, mtt_model),
-                  curve = purrr::map(.data$fit, mtt_make_curve, drug_conc),
-                  ic = purrr::map(.data$fit, mtt_get_ic, ic_pct = ic_pct)) |>
+    dplyr::mutate(
+      fit = purrr::map(.data$data, mtt_model),
+      curve = purrr::map(.data$fit, mtt_make_curve, drug_conc),
+      ic = purrr::map(.data$fit, mtt_get_ic, ic_pct = ic_pct)
+    ) |>
     tidyr::unnest(cols = c(.data$ic, .data$data)) |>
     dplyr::ungroup()
 }
@@ -48,23 +52,31 @@ mtt_calc.spectramax <- function(x, condition_names, drug_conc, ic_pct = 50, ...)
     gplate::gp_serve() |>
     dplyr::filter(!is.na(as.character(.data$condition))) |>
     dplyr::group_by(.data$condition, .data$drug) |>
-    dplyr::mutate(diff = .data$nm562 - .data$nm660,
-                  mean = mean(.data$diff),
-                  drug = as.numeric(levels(.data$drug)[.data$drug]),
-                  drug = ifelse(.data$drug == 0, 1e-12, .data$drug)) |>
+    dplyr::mutate(
+      diff = .data$nm562 - .data$nm660,
+      mean = mean(.data$diff),
+      drug = as.numeric(levels(.data$drug)[.data$drug]),
+      drug = ifelse(.data$drug == 0, 0, .data$drug)
+    ) |>
     dplyr::group_by(.data$condition) |>
-    dplyr::mutate(div = .data$diff/.data$mean[which(.data$drug == min(.data$drug))]) |>
+    dplyr::mutate(div = .data$diff / .data$mean[which(.data$drug == min(.data$drug))]) |>
     dplyr::group_by(.data$condition) |>
     tidyr::nest() |>
-    dplyr::mutate(fit = purrr::map(.data$data, mtt_model),
-                  curve = purrr::map(.data$fit, mtt_make_curve, drug_conc),
-                  ic = purrr::map(.data$fit, mtt_get_ic, ic_pct = ic_pct)) |>
+    dplyr::mutate(
+      fit = purrr::map(.data$data, mtt_model),
+      curve = purrr::map(.data$fit, mtt_make_curve, drug_conc),
+      ic = purrr::map(.data$fit, mtt_get_ic, ic_pct = ic_pct)
+    ) |>
     tidyr::unnest(cols = c(.data$ic, .data$data)) |>
     dplyr::ungroup()
 }
 
 mtt_model <- function(data) {
-  drc::drm(div ~ drug, data = data, fct = drc::L.4(fixed = c(NA, NA, 1, NA)))
+  drc::drm(
+    div ~ drug,
+    data = data, fct = drc::LL.4(fixed = c(NA, NA, NA, NA)),
+    lowerl = c(-Inf, 0, -Inf, -Inf)
+  )
 }
 
 mtt_make_curve <- function(fit, drug_conc, length_out = 1000) {
@@ -75,10 +87,12 @@ mtt_make_curve <- function(fit, drug_conc, length_out = 1000) {
 }
 
 mtt_get_ic <- function(fit, ic_pct) {
-  drc::ED(fit, respLev = 100-ic_pct, display = FALSE) |> #
+  drc::ED(fit, respLev = ic_pct, display = FALSE) |> #
     dplyr::as_tibble() |>
-    dplyr::rename(ic_value = .data$Estimate,
-                  ic_std_err = .data$`Std. Error`) |>
+    dplyr::rename(
+      ic_value = .data$Estimate,
+      ic_std_err = .data$`Std. Error`
+    ) |>
     dplyr::mutate(ic_pct = ic_pct)
 }
 
@@ -100,7 +114,8 @@ mtt_plot <- function(mtt, plot_ics = FALSE) {
       ggplot2::aes(
         as.numeric(.data$drug),
         .data$div,
-        color = .data$condition)
+        color = .data$condition
+      )
     ) +
     ggplot2::geom_point() +
     ggplot2::scale_x_log10() +
@@ -112,14 +127,23 @@ mtt_plot <- function(mtt, plot_ics = FALSE) {
       dplyr::summarize(
         ic_value = unique(.data$ic_value),
         ic_std_err = unique(.data$ic_std_err),
-        ic_pct = unique(.data$ic_pct)
+        ic_pct = unique(.data$ic_pct),
+        ic_fit = unique(.data$fit)
       ) |>
-      dplyr::mutate(label = paste0("IC", ic_pct, ": ", round(ic_value, 2)))
+      dplyr::mutate(
+        label = paste0("IC", ic_pct, ": ", round(ic_value, 2))
+      ) |>
+      dplyr::mutate(
+        ic_y_fn = purrr::map(.data$ic_fit, \(x) x[[3]][[1]])
+      ) |>
+      dplyr::rowwise() |>
+      dplyr::mutate(ic_y = .data$ic_y_fn(.data$ic_value)[, 1]) |>
+      dplyr::ungroup()
     plot <- plot +
       ggrepel::geom_label_repel(
         data = ic_annot,
-        ggplot2::aes(x = .data$ic_value, y = 1 - .data$ic_pct/100, label = .data$label),
-        nudge_x = -10
+        ggplot2::aes(x = .data$ic_value, y = .data$ic_y, label = .data$label),
+        nudge_x = -5
       )
   }
   plot
