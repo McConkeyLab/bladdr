@@ -19,24 +19,10 @@ mtt_calc <- function(x, ...) {
 #' @rdname mtt_calc
 mtt_calc.data.frame <- function(x, drug_conc, ic_pct = 50, ...) {
   x |>
-    dplyr::filter(!is.na(as.character(.data$condition))) |>
-    dplyr::group_by(.data$condition, .data$drug) |>
-    dplyr::mutate(
-      diff = .data$nm562 - .data$nm660,
-      mean = mean(.data$diff),
-      drug = ifelse(.data$drug == 0, 1e-12, .data$drug)
-    ) |>
-    dplyr::group_by(.data$condition) |>
-    dplyr::mutate(div = .data$diff / .data$mean[which(.data$drug == min(.data$drug))]) |>
-    dplyr::group_by(.data$condition) |>
-    tidyr::nest() |>
-    dplyr::mutate(
-      fit = purrr::map(.data$data, mtt_model),
-      curve = purrr::map(.data$fit, mtt_make_curve, drug_conc),
-      ic = purrr::map(.data$fit, mtt_get_ic, ic_pct = ic_pct)
-    ) |>
-    tidyr::unnest(cols = c(.data$ic, .data$data)) |>
-    dplyr::ungroup()
+    rm_unassigned_wells() |>
+    subtract_bg_and_get_mean() |>
+    normalize_to_lowest_conc() |>
+    fit_mtt(drug_conc, ic_pct)
 }
 
 mtt_calc.gp <- function(x, ...) {
@@ -46,55 +32,12 @@ mtt_calc.gp <- function(x, ...) {
 #' @export
 #' @rdname mtt_calc
 mtt_calc.spectramax <- function(x, condition_names, drug_conc, ic_pct = 50, ...) {
-  x$data[[1]]$data |>
+  df <- x$data[[1]]$data |>
     gplate::gp_sec("condition", nrow = 4, ncol = 6, labels = condition_names) |>
     gplate::gp_sec("drug", nrow = 4, ncol = 1, labels = drug_conc, advance = FALSE) |>
-    gplate::gp_serve() |>
-    dplyr::filter(!is.na(as.character(.data$condition))) |>
-    dplyr::group_by(.data$condition, .data$drug) |>
-    dplyr::mutate(
-      diff = .data$nm562 - .data$nm660,
-      mean = mean(.data$diff),
-      drug = as.numeric(levels(.data$drug)[.data$drug]),
-      drug = ifelse(.data$drug == 0, 0, .data$drug)
-    ) |>
-    dplyr::group_by(.data$condition) |>
-    dplyr::mutate(div = .data$diff / .data$mean[which(.data$drug == min(.data$drug))]) |>
-    dplyr::group_by(.data$condition) |>
-    tidyr::nest() |>
-    dplyr::mutate(
-      fit = purrr::map(.data$data, mtt_model),
-      curve = purrr::map(.data$fit, mtt_make_curve, drug_conc),
-      ic = purrr::map(.data$fit, mtt_get_ic, ic_pct = ic_pct)
-    ) |>
-    tidyr::unnest(cols = c(.data$ic, .data$data)) |>
-    dplyr::ungroup()
-}
+    gplate::gp_serve()
 
-mtt_model <- function(data) {
-  drc::drm(
-    div ~ drug,
-    data = data, fct = drc::LL.4(fixed = c(NA, NA, NA, NA)),
-    lowerl = c(-Inf, 0, -Inf, -Inf),
-    upperl = c(Inf, Inf, 1, Inf)
-  )
-}
-
-mtt_make_curve <- function(fit, drug_conc, length_out = 1000) {
-  min <- ifelse(min(drug_conc) == 0, 1e-12, min(drug_conc))
-  x <- exp(seq(log(min), log(max(drug_conc)), length.out = length_out))
-  curve <- fit$curve[[1]](x)
-  data.frame(x = x, y = curve)
-}
-
-mtt_get_ic <- function(fit, ic_pct) {
-  drc::ED(fit, respLev = ic_pct, display = FALSE) |> #
-    dplyr::as_tibble() |>
-    dplyr::rename(
-      ic_value = .data$Estimate,
-      ic_std_err = .data$`Std. Error`
-    ) |>
-    dplyr::mutate(ic_pct = ic_pct)
+  mtt_calc(df, drug_conc = drug_conc, ic_pct = ic_pct)
 }
 
 #' Plot MTT results
@@ -148,4 +91,67 @@ mtt_plot <- function(mtt, plot_ics = FALSE) {
       )
   }
   plot
+}
+
+
+# MTT utils --------------------------------------------------------------------
+rm_unassigned_wells <- function(df) {
+  dplyr::filter(df, !is.na(as.character(.data$condition)))
+}
+
+subtract_bg_and_get_mean <- function(df) {
+  dplyr::group_by(df, .data$condition, .data$drug) |>
+    dplyr::mutate(
+      diff = .data$nm562 - .data$nm660,
+      mean = mean(.data$diff),
+      drug = as.numeric(levels(.data$drug)[.data$drug])
+      # Is this needed with the new log fit?
+      #drug = ifelse(.data$drug == 0, 1e-12, .data$drug)
+    ) |>
+    dplyr::ungroup()
+}
+
+normalize_to_lowest_conc <- function(df) {
+  dplyr::group_by(df, .data$condition) |>
+    dplyr::mutate(div = .data$diff / .data$mean[which(.data$drug == min(.data$drug))]) |>
+    dplyr::ungroup()
+}
+
+fit_mtt <- function(df, drug_conc, ic_pct) {
+  dplyr::group_by(df, .data$condition) |>
+    tidyr::nest() |>
+    dplyr::mutate(
+      fit = purrr::map(.data$data, mtt_model),
+      # Should calculate curve at plotting time?
+      curve = purrr::map(.data$fit, mtt_make_curve, drug_conc),
+      ic = purrr::map(.data$fit, mtt_get_ic, ic_pct = ic_pct)
+    ) |>
+    tidyr::unnest(cols = c(.data$ic, .data$data)) |>
+    dplyr::ungroup()
+}
+
+mtt_model <- function(data) {
+  drc::drm(
+    div ~ drug,
+    data = data, fct = drc::LL.4(fixed = c(NA, NA, NA, NA)),
+    lowerl = c(-Inf, 0, -Inf, -Inf),
+    upperl = c(Inf, Inf, 1, Inf)
+  )
+}
+
+mtt_make_curve <- function(fit, drug_conc, length_out = 1000) {
+  min <- ifelse(min(drug_conc) == 0, 1e-12, min(drug_conc))
+  x <- exp(seq(log(min), log(max(drug_conc)), length.out = length_out))
+  curve <- fit$curve[[1]](x)
+  data.frame(x = x, y = curve)
+}
+
+mtt_get_ic <- function(fit, ic_pct) {
+  drc::ED(fit, respLev = ic_pct, display = FALSE) |> #
+    dplyr::as_tibble() |>
+    dplyr::rename(
+      ic_value = .data$Estimate,
+      ic_std_err = .data$`Std. Error`
+    ) |>
+    dplyr::mutate(ic_pct = ic_pct)
 }
