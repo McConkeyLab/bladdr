@@ -27,7 +27,8 @@ Imports:
 Suggests:
     knitr,
     rmarkdown,
-    DESeq2
+    DESeq2,
+    testthat (>= 3.0.0)
 Remotes:
   KaiAragaki/gplate,
   KaiAragaki/mop
@@ -35,3 +36,4 @@ VignetteBuilder: knitr
 biocViews:
 Depends: 
     R (>= 4.1)
+Config/testthat/edition: 3

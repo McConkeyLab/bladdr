@@ -18,9 +18,11 @@ mtt_calc <- function(x, ...) {
 #' @export
 #' @rdname mtt_calc
 mtt_calc.data.frame <- function(x, drug_conc, ic_pct = 50, ...) {
+  drug_conc <- sanitize_drug_conc(drug_conc)
+
   x |>
     rm_unassigned_wells() |>
-    subtract_bg_and_get_mean() |>
+    subtract_bg_and_get_mean(drug_conc) |>
     normalize_to_lowest_conc() |>
     fit_mtt(drug_conc, ic_pct)
 }
@@ -32,6 +34,8 @@ mtt_calc.gp <- function(x, ...) {
 #' @export
 #' @rdname mtt_calc
 mtt_calc.spectramax <- function(x, condition_names, drug_conc, ic_pct = 50, ...) {
+  drug_conc <- sanitize_drug_conc(drug_conc)
+
   df <- x$data[[1]]$data |>
     gplate::gp_sec("condition", nrow = 4, ncol = 6, labels = condition_names) |>
     gplate::gp_sec("drug", nrow = 4, ncol = 1, labels = drug_conc, advance = FALSE) |>
@@ -49,9 +53,18 @@ mtt_calc.spectramax <- function(x, condition_names, drug_conc, ic_pct = 50, ...)
 #' @return a `ggplot`
 #' @export
 mtt_plot <- function(mtt, plot_ics = FALSE) {
+
+  drug_conc <- c(min(mtt$drug), max(mtt$drug))
+
   fit_curve <- mtt |>
+    dplyr::group_by(condition, fit) |>
+    tidyr::nest() |>
+    dplyr::mutate(
+      curve = purrr::map(.data$fit, make_curve, drug_conc)
+    ) |>
     dplyr::select("condition", "curve") |>
-    tidyr::unnest(.data$curve)
+    tidyr::unnest(.data$curve) |>
+    dplyr::ungroup()
 
   plot <- mtt |>
     ggplot2::ggplot(
@@ -95,63 +108,159 @@ mtt_plot <- function(mtt, plot_ics = FALSE) {
 
 
 # MTT utils --------------------------------------------------------------------
+#' Remove unassigned wells
+#'
+#' @param df a `data.frame`
+#'
+#' @return a `tibble` without any conditions that are `NA`
 rm_unassigned_wells <- function(df) {
   dplyr::filter(df, !is.na(as.character(.data$condition)))
 }
 
-subtract_bg_and_get_mean <- function(df) {
+#' Subtract background and calculate mean per drug and condition
+#'
+#' @param df a `data.frame` containing columns `condition`, `drug`, `nm562`, and `nm660`.
+#' @param drug_conc a numeric vector containing drug concentrations of the
+#'   conditions, from left to right
+#'
+#' @return a `tibble`
+subtract_bg_and_get_mean <- function(df, drug_conc) {
   dplyr::group_by(df, .data$condition, .data$drug) |>
     dplyr::mutate(
       diff = .data$nm562 - .data$nm660,
       mean = mean(.data$diff),
-      drug = as.numeric(levels(.data$drug)[.data$drug])
-      # Is this needed with the new log fit?
-      #drug = ifelse(.data$drug == 0, 1e-12, .data$drug)
+      drug = as.numeric(levels(.data$drug)[.data$drug]),
     ) |>
     dplyr::ungroup()
 }
 
+#' Divide all differences by lowest concentration
+#'
+#' @param df a `data.frame` containing at `diff` (A562-A660), `drug` (numeric
+#'   conc of drug), and `mean` (mean of `diff` per condition and conc)
+#'
+#' @return a `tibble`
 normalize_to_lowest_conc <- function(df) {
   dplyr::group_by(df, .data$condition) |>
     dplyr::mutate(div = .data$diff / .data$mean[which(.data$drug == min(.data$drug))]) |>
     dplyr::ungroup()
 }
 
+#' Model curve, produce plots, and calculate IC per MTT condition
+#'
+#' @param df a `data.frame` containing a `condition`, `div`, and `drug` column
+#' @param drug_conc a numeric vector containing drug concentrations of the
+#'   conditions, from left to right
+#' @param ic_pct numeric. The %IC desired, where 25 would represent the
+#'   concentration at which growth was reduced by 25% vs baseline
+#'
+#' @return A `tibble`
 fit_mtt <- function(df, drug_conc, ic_pct) {
   dplyr::group_by(df, .data$condition) |>
     tidyr::nest() |>
     dplyr::mutate(
       fit = purrr::map(.data$data, mtt_model),
-      # Should calculate curve at plotting time?
-      curve = purrr::map(.data$fit, mtt_make_curve, drug_conc),
-      ic = purrr::map(.data$fit, mtt_get_ic, ic_pct = ic_pct)
+
+      ic = purrr::map(.data$fit, get_ic, ic_pct = ic_pct)
     ) |>
     tidyr::unnest(cols = c(.data$ic, .data$data)) |>
     dplyr::ungroup()
 }
 
+#' Try to fit a logistic curve to MTT data
+#'
+#' Function will try to fit a 4 parameter log-logistic function. Constraints: Y
+#' is bounded between 0 and 1.
+#'
+#' If the model fails to fit the first time, it will try again without
+#' constraints
+#'
+#' @param data a `data.frame` containing a `div` (dep var.) and `drug` (indep.
+#'   var) column.
+#'
+#' @return  A `drc` object
 mtt_model <- function(data) {
-  drc::drm(
-    div ~ drug,
-    data = data, fct = drc::LL.4(fixed = c(NA, NA, NA, NA)),
-    lowerl = c(-Inf, 0, -Inf, -Inf),
-    upperl = c(Inf, Inf, 1, Inf)
-  )
+
+  model_strict <- function(data) {
+    drc::drm(
+      div ~ drug, data = data, fct = drc::LL.4(),
+      lowerl = c(-Inf, 0, -Inf, -Inf),
+      upperl = c(Inf, Inf, 1, Inf)
+    )
+  }
+  model_lax <- function(data) {
+    drc::drm(
+      div ~ drug, data = data, fct = drc::LL.4()
+    )
+  }
+  safe_model_strict <- purrr::safely(model_strict)
+  model <- safe_model_strict(data)
+  if (!is.null(model$result)) {
+    return(model$result)
+  }
+  safe_model_lax <- purrr::safely(model_lax)
+  model <- safe_model_lax(data)
+  model$result
 }
 
-mtt_make_curve <- function(fit, drug_conc, length_out = 1000) {
-  min <- ifelse(min(drug_conc) == 0, 1e-12, min(drug_conc))
-  x <- exp(seq(log(min), log(max(drug_conc)), length.out = length_out))
-  curve <- fit$curve[[1]](x)
+#' Make points for plotting based off a fit
+#'
+#' @param fit a `drc` object
+#' @param drug_conc numeric vector of drug concentrations. Assumes no 0s.
+#' @param length_out number of points to generate. More points = smoother curve.
+#'
+#' @return A `data.frame` of x and y coordinates for a given fit
+make_curve <- function(fit, drug_conc, length_out = 1000) {
+  x <- exp(seq(log(min(drug_conc)), log(max(drug_conc)), length.out = length_out))
+  if (!is.null(fit)) {
+    curve <- fit$curve[[1]](x)
+  } else {
+    curve <- NA
+  }
   data.frame(x = x, y = curve)
 }
 
-mtt_get_ic <- function(fit, ic_pct) {
-  drc::ED(fit, respLev = ic_pct, display = FALSE) |> #
-    dplyr::as_tibble() |>
-    dplyr::rename(
-      ic_value = .data$Estimate,
-      ic_std_err = .data$`Std. Error`
-    ) |>
-    dplyr::mutate(ic_pct = ic_pct)
+#' Get the IC value of a fit at a given percent
+#'
+#' @param fit A `drc` object
+#' @param ic_pct numeric. The %IC desired, where 25 would represent the
+#'   concentration at which growth was reduced by 25% vs baseline
+#'
+#' @return A `tibble` with three columns - `ic_value`, `ic_std_err`, and
+#'   `ic_pct`
+get_ic <- function(fit, ic_pct) {
+  if(!is.null(fit)) {
+    drc::ED(fit, respLev = ic_pct, display = FALSE) |>
+      dplyr::as_tibble() |>
+      dplyr::rename(
+        ic_value = .data$Estimate,
+        ic_std_err = .data$`Std. Error`
+      ) |>
+      dplyr::mutate(ic_pct = ic_pct)
+  } else {
+    NA
+  }
+}
+
+#' Convert 0 to a small enough equivalent
+#'
+#' 0 doesn't behave well with the fitting algorithm. This takes the
+#' user-supplied drug concentrations and converts the 0 value (if it exists) to
+#' a value low enough to approximate 0 without scaring the fitting algorithm too
+#' much. Specifically, it converts 0 to:
+#'
+#' $second_smallest/third_smallest^4$
+#'
+#' @param drug_conc numeric vector of drug concentrations, in the order
+#'   which they appear in the section (left to right)
+#'
+#' @return a numeric vector of the same length and order as input
+sanitize_drug_conc <- function(drug_conc) {
+  if (min(drug_conc) == 0) {
+    sorted <- unique(sort(drug_conc))
+    new_low <- sorted[2]/(sorted[3]^4)
+    drug_conc <- ifelse(drug_conc == 0, new_low, drug_conc)
+    message("Lowest drug concentration is 0, converting to ", new_low)
+  }
+  drug_conc
 }
