@@ -1,7 +1,7 @@
 #' Make a plot from MTT data
 #'
 #' @param x A `data.frame`, `gp`, or `spectramax` object. See Details.
-#' @param ... Arguments passed to their repsective methods
+#' @param ... Arguments passed to their respective methods
 #'
 #' @details If supplied with a `data.frame`, `mtt` will expect...
 #'
