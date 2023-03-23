@@ -191,7 +191,7 @@ list_gbci_dir <- function(path, dest) {
   }
   items <- drive$list_items(path, full_names = TRUE)
   apply(items, 1, list_recursive, drive = drive, simplify = FALSE) |>
-    dplyr::bind_rows()
+    lapply(dplyr::bind_rows) |> dplyr::bind_rows() # This feels...fragile
 }
 
 list_recursive <- function(item, drive) {
