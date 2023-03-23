@@ -4,11 +4,13 @@
 \alias{sanitize_drug_conc}
 \title{Convert 0 to a small enough equivalent}
 \usage{
-sanitize_drug_conc(drug_conc)
+sanitize_drug_conc(drug_conc, quiet = FALSE)
 }
 \arguments{
-\item{drug_conc}{numeric vector of drug concentrations, in the order
-which they appear in the section (left to right)}
+\item{drug_conc}{numeric vector of drug concentrations, in the order which
+they appear in the section (left to right)}
+
+\item{quiet}{Should conversion from 0 to some small number be done silently?}
 }
 \value{
 a numeric vector of the same length and order as input

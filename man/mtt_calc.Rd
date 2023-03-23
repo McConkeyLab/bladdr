@@ -8,7 +8,7 @@
 \usage{
 mtt_calc(x, ...)
 
-\method{mtt_calc}{data.frame}(x, drug_conc, ic_pct = 50, ...)
+\method{mtt_calc}{data.frame}(x, ic_pct = 50, ...)
 
 \method{mtt_calc}{spectramax}(x, condition_names, drug_conc, ic_pct = 50, ...)
 }
@@ -17,13 +17,13 @@ mtt_calc(x, ...)
 
 \item{...}{Arguments passed to their respective methods}
 
-\item{drug_conc}{a numeric vector containing drug concentrations of the
-conditions, from left to right}
-
 \item{ic_pct}{numeric. The \%IC desired, where 25 would represent the
 concentration at which growth was reduced by 25\% vs baseline}
 
 \item{condition_names}{What to name each 'sector' of the plate}
+
+\item{drug_conc}{a numeric vector containing drug concentrations of the
+conditions, from left to right}
 }
 \value{
 a \code{tibble}

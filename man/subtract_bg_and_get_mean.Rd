@@ -4,14 +4,11 @@
 \alias{subtract_bg_and_get_mean}
 \title{Subtract background and calculate mean per drug and condition}
 \usage{
-subtract_bg_and_get_mean(df, drug_conc)
+subtract_bg_and_get_mean(df)
 }
 \arguments{
 \item{df}{a \code{data.frame} containing columns \code{condition}, \code{drug}, \code{nm562}, and
 \code{nm660}.}
-
-\item{drug_conc}{a numeric vector containing drug concentrations of the
-conditions, from left to right}
 }
 \value{
 a \code{tibble}
