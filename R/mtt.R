@@ -274,7 +274,7 @@ get_ic <- function(fit, ic_pct) {
 sanitize_drug_conc <- function(drug_conc, quiet = FALSE) {
   if (min(drug_conc) == 0) {
     sorted <- unique(sort(drug_conc))
-    new_low <- sorted[2]/(sorted[3]^4)
+    new_low <- (sorted[2]/sorted[3])^4
     drug_conc <- ifelse(drug_conc == 0, new_low, drug_conc)
     if (!quiet) {
       message("Lowest drug concentration is 0, converting to ", new_low)
