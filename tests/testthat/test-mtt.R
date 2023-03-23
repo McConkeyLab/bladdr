@@ -86,3 +86,10 @@ test_that("Drug concentration is not reordered", {
     c(1, 0.0625, 2)
   )
 })
+
+test_that("New 0 is correct even when numerator is not 1", {
+  expect_equal(
+    sanitize_drug_conc(c(0.01, 0.1, 0, 1, 10, 100)),
+    c(0.01, 0.1, 1e-4, 1, 10, 100)
+  )
+})
