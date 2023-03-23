@@ -8,6 +8,9 @@ mtt_plot(mtt, plot_ics = FALSE)
 }
 \arguments{
 \item{mtt}{a \code{data.frame} output from  \code{mtt_calc()}}
+
+\item{plot_ics}{logical. Should the calculated inhibitor concentrations be
+plotted?}
 }
 \value{
 a \code{ggplot}

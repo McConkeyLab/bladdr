@@ -4,7 +4,7 @@
 \alias{mtt_calc}
 \alias{mtt_calc.data.frame}
 \alias{mtt_calc.spectramax}
-\title{Make a plot from MTT data}
+\title{Calculate and fit MTT model from absorbance data}
 \usage{
 mtt_calc(x, ...)
 
@@ -13,19 +13,31 @@ mtt_calc(x, ...)
 \method{mtt_calc}{spectramax}(x, condition_names, drug_conc, ic_pct = 50, ...)
 }
 \arguments{
-\item{x}{A \code{data.frame}, \code{gp}, or \code{spectramax} object. See Details.}
+\item{x}{A \code{data.frame}, \code{spectramax}, or \code{gp} object. See Details.}
 
-\item{...}{Arguments passed to their repsective methods}
+\item{...}{Arguments passed to their respective methods}
+
+\item{drug_conc}{a numeric vector containing drug concentrations of the
+conditions, from left to right}
+
+\item{ic_pct}{numeric. The \%IC desired, where 25 would represent the
+concentration at which growth was reduced by 25\% vs baseline}
+
+\item{condition_names}{What to name each 'sector' of the plate}
 }
 \value{
-a \code{ggplot}
+a \code{tibble}
 }
 \description{
-Make a plot from MTT data
+Calculate and fit MTT model from absorbance data
 }
 \details{
-If supplied with a \code{data.frame}, \code{mtt} will expect...
+If supplied with a \code{data.frame}, \code{mtt} will expect columns \code{condition},
+\code{drug}, \code{nm562}, and \code{nm660}.
 
-Using a \code{gp} object is a good idea if you have a 'non-standard' plate layout
-(standard being each quarter of the plate is a condition)
+If supplied with a \code{spectramax} object, everything should be in place.
+
+Using a \code{gp} object (NOT CURRENTLY SUPPORTED) is a good idea if you have a
+'non-standard' plate layout (standard being each quarter of the plate is a
+condition)
 }
