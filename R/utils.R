@@ -132,7 +132,7 @@ make_pipette_vol <- function(vol) {
 #'
 #' @return Character. The local path to the downloaded file.
 #' @export
-get_gbci_file <- function(path, dest = NULL) {
+get_gbci_file <- function(path, dest = NULL, overwrite = FALSE) {
   ext <- fs::path_ext(path)
   sp <- Microsoft365R::get_sharepoint_site(site_url = "https://livejohnshopkins.sharepoint.com/sites/GBCIStorage")
   drive <- sp$get_drive()
@@ -141,7 +141,7 @@ get_gbci_file <- function(path, dest = NULL) {
     dest <- fs::file_temp(ext = ext)
   }
 
-  drive$download_file(path, dest = dest)
+  drive$download_file(path, dest = dest, overwrite = overwrite)
   dest
 }
 
@@ -157,7 +157,7 @@ get_gbci_file <- function(path, dest = NULL) {
 #' \dontrun{
 #' get_gbci_dir("Raw Data/SPECTRAmax/aragaki-kai/", "path/to/my/dir")
 #' }
-get_gbci_dir <- function(path, dest) {
+get_gbci_dir <- function(path, dest, overwrite = FALSE) {
   sp <- Microsoft365R::get_sharepoint_site(site_url = "https://livejohnshopkins.sharepoint.com/sites/GBCIStorage")
   drive <- sp$get_drive()
   if (is.null(drive$get_item_properties(path)$folder)) {
@@ -165,11 +165,11 @@ get_gbci_dir <- function(path, dest) {
   }
   items <- drive$list_items(path, full_names = TRUE)
   dir.create(dest, recursive = TRUE)
-  apply(items, 1, get_recursive, drive = drive, og_path = path, dest = dest, simplify = FALSE)
+  apply(items, 1, get_recursive, drive = drive, og_path = path, dest = dest, overwrite = overwrite, simplify = FALSE)
   dest
 }
 
-get_recursive <- function(item, drive, og_path, dest) {
+get_recursive <- function(item, drive, og_path, dest, overwrite) {
   top_dir <- stringr::str_extract(og_path, "[^/]*$")
   save_path <- stringr::str_remove(item[["name"]], paste0(og_path, "?/"))
   save_path <- fs::path(dest, top_dir, save_path)
@@ -178,7 +178,7 @@ get_recursive <- function(item, drive, og_path, dest) {
     items <- drive$list_items(item[["name"]], full_names = TRUE)
     apply(items, 1, get_recursive, drive, og_path, dest, simplify = FALSE)
   } else {
-    drive$download_file(item[["name"]], dest = save_path)
+    drive$download_file(item[["name"]], dest = save_path, overwrite = overwrite)
   }
 }
 
