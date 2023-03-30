@@ -183,15 +183,18 @@ get_recursive <- function(item, drive, og_path, dest, overwrite) {
 }
 
 #' @export
-list_gbci_dir <- function(path, dest) {
+list_gbci_dir <- function(path, recursive = FALSE) {
   sp <- Microsoft365R::get_sharepoint_site(site_url = "https://livejohnshopkins.sharepoint.com/sites/GBCIStorage")
   drive <- sp$get_drive()
   if (is.null(drive$get_item_properties(path)$folder)) {
     stop("Specified path is not a directory")
   }
   items <- drive$list_items(path, full_names = TRUE)
-  apply(items, 1, list_recursive, drive = drive, simplify = FALSE) |>
-    lapply(dplyr::bind_rows) |> dplyr::bind_rows() # This feels...fragile
+  if (recursive) {
+    items <- apply(items, 1, list_recursive, drive = drive, simplify = FALSE) |>
+      lapply(dplyr::bind_rows) |> dplyr::bind_rows() # This feels...fragile
+  }
+  items
 }
 
 list_recursive <- function(item, drive) {
