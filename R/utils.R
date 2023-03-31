@@ -123,19 +123,35 @@ make_pipette_vol <- function(vol) {
   vol
 }
 
+#' @export
+get_gbci <- function(path, dest = NULL, overwrite = FALSE) {
+  drive <- get_gbci_drive_connection()
+  if (is.null(drive$get_item_properties(path)$folder)) {
+    get_gbci_file(path, dest, overwrite, drive)
+  } else {
+    get_gbci_dir(path, dest, overwrite, drive)
+  }
+}
+
 #' Get a file from the GBCI SharePoint
 #'
 #' @details This function requires access to the SharePoint in the first place.
 #'
 #' @param path Path to file on SharePoint
-#' @param dest Where to put the file (and what to name it). Defaults to a temp file.
+#' @param dest Where to put the file (and what to name it). Defaults to a temp
+#'   file.
+#' @param overwrite Logical. Should files be overwritten if they already exist?
+#' @param drive Optional. A `Microsoft365R::ms_drive`. Can be passed from parent
+#'   functions to avoid multiple calls, which can be faster.
 #'
 #' @return Character. The local path to the downloaded file.
 #' @export
-get_gbci_file <- function(path, dest = NULL, overwrite = FALSE) {
+get_gbci_file <- function(path, dest = NULL, overwrite = FALSE, drive = NULL) {
   ext <- fs::path_ext(path)
-  sp <- Microsoft365R::get_sharepoint_site(site_url = "https://livejohnshopkins.sharepoint.com/sites/GBCIStorage")
-  drive <- sp$get_drive()
+
+  if (is.null(drive)) {
+    drive <- get_gbci_drive_connection()
+  }
 
   if (is.null(dest)) {
     dest <- fs::file_temp(ext = ext)
@@ -157,23 +173,35 @@ get_gbci_file <- function(path, dest = NULL, overwrite = FALSE) {
 #' \dontrun{
 #' get_gbci_dir("Raw Data/SPECTRAmax/aragaki-kai/", "path/to/my/dir")
 #' }
-get_gbci_dir <- function(path, dest, overwrite = FALSE) {
-  sp <- Microsoft365R::get_sharepoint_site(site_url = "https://livejohnshopkins.sharepoint.com/sites/GBCIStorage")
-  drive <- sp$get_drive()
+get_gbci_dir <- function(path, dest, overwrite = FALSE, drive = NULL) {
+  if (is.null(drive)) {
+    drive <- get_gbci_drive_connection()
+  }
+
+  if (is.null(dest)) {
+    dest <- tempdir()
+  }
+
   if (is.null(drive$get_item_properties(path)$folder)) {
     stop("Specified path is not a directory")
   }
-  items <- drive$list_items(path, full_names = TRUE)
-  dir.create(dest, recursive = TRUE)
-  apply(items, 1, get_recursive, drive = drive, og_path = path, dest = dest, overwrite = overwrite, simplify = FALSE)
-  dest
-}
 
+  items <- drive$list_items(path, full_names = TRUE)
+
+  dir.create(dest, recursive = TRUE)
+
+  apply(items, 1, get_recursive, drive = drive, og_path = path, dest = dest, overwrite = overwrite, simplify = FALSE)
+
+  fs::path(dest, stringr::str_extract(path, "[^/]*$"))
+}
+# FIXME return last dir path not parent to dir path
 get_recursive <- function(item, drive, og_path, dest, overwrite) {
   top_dir <- stringr::str_extract(og_path, "[^/]*$")
+  fs::dir_create(fs::path(dest, top_dir))
   save_path <- stringr::str_remove(item[["name"]], paste0(og_path, "?/"))
   save_path <- fs::path(dest, top_dir, save_path)
   if (as.logical(item[["isdir"]])) {
+    # FIXME redundant to above?
     dir.create(save_path, recursive = TRUE)
     items <- drive$list_items(item[["name"]], full_names = TRUE)
     apply(items, 1, get_recursive, drive, og_path, dest, simplify = FALSE)
@@ -206,3 +234,9 @@ list_recursive <- function(item, drive) {
   }
 }
 
+get_gbci_drive_connection <- function() {
+  sp <- Microsoft365R::get_sharepoint_site(
+    site_url = "https://livejohnshopkins.sharepoint.com/sites/GBCIStorage"
+  )
+  sp$get_drive()
+}

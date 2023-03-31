@@ -4,12 +4,18 @@
 \alias{get_gbci_file}
 \title{Get a file from the GBCI SharePoint}
 \usage{
-get_gbci_file(path, dest = NULL)
+get_gbci_file(path, dest = NULL, overwrite = FALSE, drive = NULL)
 }
 \arguments{
 \item{path}{Path to file on SharePoint}
 
-\item{dest}{Where to put the file (and what to name it). Defaults to a temp file.}
+\item{dest}{Where to put the file (and what to name it). Defaults to a temp
+file.}
+
+\item{overwrite}{Logical. Should files be overwritten if they already exist?}
+
+\item{drive}{Optional. A \code{Microsoft365R::ms_drive}. Can be passed from parent
+functions to avoid multiple calls, which can be faster.}
 }
 \value{
 Character. The local path to the downloaded file.

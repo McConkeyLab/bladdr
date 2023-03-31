@@ -4,7 +4,7 @@
 \alias{get_gbci_dir}
 \title{Recursively download a directory from SharePoint}
 \usage{
-get_gbci_dir(path, dest)
+get_gbci_dir(path, dest, overwrite = FALSE, drive = NULL)
 }
 \arguments{
 \item{path}{Path to the directory on SharePoint}
