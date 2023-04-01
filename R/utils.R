@@ -234,6 +234,7 @@ list_recursive <- function(item, drive) {
   }
 }
 
+#' @export
 get_gbci_drive_connection <- function() {
   sp <- Microsoft365R::get_sharepoint_site(
     site_url = "https://livejohnshopkins.sharepoint.com/sites/GBCIStorage"
