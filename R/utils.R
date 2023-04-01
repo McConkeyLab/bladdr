@@ -68,11 +68,11 @@ theme_tufte <- function(font_size = 30, use_gillsans = TRUE) {
 
 #' Calculate dilution from known concentrations
 #'
-#' @param c1 numeric. Initial concentration of sample.
-#' @param c2 numeric. Target concentration of sample.
-#' @param v2 numeric. Target final volume of sample. If `round_for_pipettes = TRUE`, assumes volume is mL.
-#' @param round_for_pipettes logical. If TRUE, rounds values to the accuracy of standard pipettes using `make_pipette_vol`.
-#' @param quiet logical. If FALSE, will warn when dilution is impossible to do without concentrating sample.
+#' @param c1 Numeric. Initial concentration of sample.
+#' @param c2 Numeric. Target concentration of sample.
+#' @param v2 Numeric. Target final volume of sample. If `round_for_pipettes = TRUE`, assumes volume is mL.
+#' @param round_for_pipettes Logical. If TRUE, rounds values to the accuracy of standard pipettes using `make_pipette_vol`.
+#' @param quiet Logical. If FALSE, will warn when dilution is impossible to do without concentrating sample.
 #'
 #' @return a named list, with `sample_to_add` as the volume of sample to add, and `add_to` as the volume to dilute the sample into.
 #' @export
@@ -99,9 +99,9 @@ dilute <- function(c1, c2 = min(c1), v2, round_for_pipettes = TRUE, quiet = FALS
 
 #' Round volume to be pipette-compatible
 #'
-#' @param vol numeric. Volume to be rounded
+#' @param vol Numeric. Volume to be rounded
 #'
-#' @return numeric. Rounded volume.
+#' @return Numeric. Rounded volume.
 #' @export
 #'
 #' @examples
@@ -161,10 +161,12 @@ get_gbci_file <- function(path, dest = NULL, overwrite = FALSE, drive = NULL) {
   dest
 }
 
-#' Recursively download a directory from SharePoint
+#' Download a directory from SharePoint
 #'
 #' @param path Path to the directory on SharePoint
 #' @param dest Path to where the file should be downloaded
+#' @param create_dir Logical. If the destination directory does not exist, create it?
+#' @inheritParams get_gbci_file
 #'
 #' @return Returns `dest`
 #' @export
@@ -173,13 +175,13 @@ get_gbci_file <- function(path, dest = NULL, overwrite = FALSE, drive = NULL) {
 #' \dontrun{
 #' get_gbci_dir("Raw Data/SPECTRAmax/aragaki-kai/", "path/to/my/dir")
 #' }
-get_gbci_dir <- function(path, dest, overwrite = FALSE, drive = NULL) {
+get_gbci_dir <- function(path,
+                         dest = tempdir(),
+                         overwrite = FALSE,
+                         create_dir = TRUE,
+                         drive = NULL) {
   if (is.null(drive)) {
     drive <- get_gbci_drive_connection()
-  }
-
-  if (is.null(dest)) {
-    dest <- tempdir()
   }
 
   if (is.null(drive$get_item_properties(path)$folder)) {
@@ -187,8 +189,9 @@ get_gbci_dir <- function(path, dest, overwrite = FALSE, drive = NULL) {
   }
 
   items <- drive$list_items(path, full_names = TRUE)
-
-  dir.create(dest, recursive = TRUE)
+  if (create_dir) {
+    dir.create(dest, recursive = TRUE, showWarnings = FALSE)
+  }
 
   apply(items, 1, get_recursive, drive = drive, og_path = path, dest = dest, overwrite = overwrite, simplify = FALSE)
 

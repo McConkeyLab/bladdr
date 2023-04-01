@@ -2,20 +2,27 @@
 % Please edit documentation in R/utils.R
 \name{get_gbci_dir}
 \alias{get_gbci_dir}
-\title{Recursively download a directory from SharePoint}
+\title{Download a directory from SharePoint}
 \usage{
-get_gbci_dir(path, dest, overwrite = FALSE, drive = NULL)
+get_gbci_dir(path, dest, overwrite = FALSE, create_dir = TRUE, drive = NULL)
 }
 \arguments{
 \item{path}{Path to the directory on SharePoint}
 
 \item{dest}{Path to where the file should be downloaded}
+
+\item{overwrite}{Logical. Should files be overwritten if they already exist?}
+
+\item{create_dir}{Logical. If the destination directory does not exist, create it?}
+
+\item{drive}{Optional. A \code{Microsoft365R::ms_drive}. Can be passed from parent
+functions to avoid multiple calls, which can be faster.}
 }
 \value{
 Returns \code{dest}
 }
 \description{
-Recursively download a directory from SharePoint
+Download a directory from SharePoint
 }
 \examples{
 \dontrun{
