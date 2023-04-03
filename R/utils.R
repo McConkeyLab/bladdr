@@ -2,7 +2,7 @@
 #' @noRd
 get_gene_index <- function(dds, genes) {
   inds <- which(rownames(dds) %in% genes)
-  if(identical(inds, integer(0))) {
+  if (identical(inds, integer(0))) {
     stop("None of the supplied genes exist in this dataset.")
   } else if (length(genes) != length(inds)) {
     found <- rownames(dds)[inds]
@@ -43,7 +43,6 @@ get_gene_expression <- function(dds, gene_indices, assay) {
 #'   geom_point() +
 #'   theme_tufte(10, use_gillsans = FALSE)
 theme_tufte <- function(font_size = 30, use_gillsans = TRUE) {
-
   font <- "sans"
 
   if (use_gillsans) {
@@ -87,7 +86,7 @@ dilute <- function(c1, c2 = min(c1), v2, round_for_pipettes = TRUE, quiet = FALS
   }
 
   v1 <- sapply(c1, \(x) c2 * v2 / x)
-  add_to <- v2-v1
+  add_to <- v2 - v1
 
   if (round_for_pipettes == TRUE) {
     v1 <- sapply(v1, make_pipette_vol)
@@ -110,13 +109,15 @@ dilute <- function(c1, c2 = min(c1), v2, round_for_pipettes = TRUE, quiet = FALS
 #' make_pipette_vol(9.9211)
 #'
 make_pipette_vol <- function(vol) {
-  if (is.na(vol)) return(vol)
+  if (is.na(vol)) {
+    return(vol)
+  }
   if (abs(vol) > 200) {
     vol <- round(vol)
   } else if (abs(vol) > 20) {
-    vol <- round(vol/2, 1) * 2
+    vol <- round(vol / 2, 1) * 2
   } else if (abs(vol) > 10) {
-    vol <- round(vol/2, 2) * 2
+    vol <- round(vol / 2, 2) * 2
   } else {
     vol <- round(vol, 2)
   }
@@ -127,9 +128,9 @@ make_pipette_vol <- function(vol) {
 get_gbci <- function(path, dest = NULL, overwrite = FALSE) {
   drive <- get_gbci_drive_connection()
   if (is.null(drive$get_item_properties(path)$folder)) {
-    get_gbci_file(path, dest, overwrite, drive)
+    get_gbci_file(path = path, dest = dest, overwrite = overwrite, drive = drive)
   } else {
-    get_gbci_dir(path, dest, overwrite, drive)
+    get_gbci_dir(path = path, dest = dest, overwrite = overwrite, drive = drive)
   }
 }
 
@@ -223,7 +224,8 @@ list_gbci_dir <- function(path, recursive = FALSE) {
   items <- drive$list_items(path, full_names = TRUE)
   if (recursive) {
     items <- apply(items, 1, list_recursive, drive = drive, simplify = FALSE) |>
-      lapply(dplyr::bind_rows) |> dplyr::bind_rows() # This feels...fragile
+      lapply(dplyr::bind_rows) |>
+      dplyr::bind_rows() # This feels...fragile
   }
   items
 }
@@ -233,7 +235,9 @@ list_recursive <- function(item, drive) {
     items <- drive$list_items(item[["name"]], full_names = TRUE)
     apply(items, 1, list_recursive, drive, simplify = FALSE)
   } else {
-    item |> t() |> tibble::as_tibble()
+    item |>
+      t() |>
+      tibble::as_tibble()
   }
 }
 
