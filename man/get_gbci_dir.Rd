@@ -4,7 +4,13 @@
 \alias{get_gbci_dir}
 \title{Download a directory from SharePoint}
 \usage{
-get_gbci_dir(path, dest, overwrite = FALSE, create_dir = TRUE, drive = NULL)
+get_gbci_dir(
+  path,
+  dest = tempdir(),
+  overwrite = FALSE,
+  create_dir = TRUE,
+  drive = NULL
+)
 }
 \arguments{
 \item{path}{Path to the directory on SharePoint}

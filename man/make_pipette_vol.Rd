@@ -7,10 +7,10 @@
 make_pipette_vol(vol)
 }
 \arguments{
-\item{vol}{numeric. Volume to be rounded}
+\item{vol}{Numeric. Volume to be rounded}
 }
 \value{
-numeric. Rounded volume.
+Numeric. Rounded volume.
 }
 \description{
 Round volume to be pipette-compatible
