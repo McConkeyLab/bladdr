@@ -7,8 +7,6 @@
 #'   level of that directory with a file name that is a concatination of all
 #'   parent directories, separated by an underscore.
 #' @export
-#'
-#' @examples
 evos_flatten <- function(path, parse_names = FALSE) {
   path <- gsub("/$", "", path)
   file_paths <- list.files(path, recursive = TRUE, full.names = TRUE, pattern = "*.tif")
