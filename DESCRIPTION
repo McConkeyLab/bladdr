@@ -16,7 +16,6 @@ Imports:
     tidyr,
     tibble,
     purrr,
-    SummarizedExperiment,
     ggrepel,
     pheatmap,
     grDevices,
@@ -27,7 +26,6 @@ Imports:
 Suggests:
     knitr,
     rmarkdown,
-    DESeq2,
     testthat (>= 3.0.0)
 Remotes:
   KaiAragaki/gplate,
