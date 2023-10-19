@@ -1,9 +1,11 @@
 #' Quantify protein concentration from a MicroBCA assay
 #'
-#' @param x A `spectramax`, `gp`, or `data.frame` object, or path to SPECTRAmax .xls(x)/.txt file.
+#' @param x A `spectramax`, `gp`, or `data.frame` object, or path to SPECTRAmax
+#' .xls(x)/.txt file.
 #' @param replicate_orientation Either 'h' or 'v' - see Details.
 #' @param sample_names Character vector of sample names.
-#' @param remove_empty Should wells that have less absorbance than the lowest standard be dropped?
+#' @param remove_empty Should wells that have less absorbance than the lowest
+#' standard be dropped?
 #'
 #' @details The standards must be in ascending concentration starting in the
 #'   upper left corner. Whether this is from from left to right or top to bottom
@@ -14,7 +16,10 @@
 #' @return a `tibble`
 #' @export
 #' @importFrom rlang .data
-qp <- function(x, replicate_orientation = c("h", "v"), sample_names = NULL, remove_empty = TRUE) {
+qp <- function(x,
+               replicate_orientation = c("h", "v"),
+               sample_names = NULL,
+               remove_empty = TRUE) {
 
   replicate_orientation <- rlang::arg_match(replicate_orientation)
 
@@ -37,17 +42,25 @@ qp <- function(x, replicate_orientation = c("h", "v"), sample_names = NULL, remo
   conc <- qp_calc_conc(mean_abs, fit)
 
   if (remove_empty) {
-    conc <- dplyr::filter(conc, .data$pred_conc > 0 | .data$sample_type == "standard")
+    conc <-
+      dplyr::filter(
+               conc, .data$pred_conc > 0 | .data$sample_type == "standard"
+             )
   }
 
   if (!is.null(sample_names)) {
-    length(sample_names) <- max(conc$index, na.rm = TRUE) # Will return "NA" instead of erroring if sample names < # samples
+    # Will return "NA" instead of erroring if sample names < # samples
+    length(sample_names) <- max(conc$index, na.rm = TRUE)
   } else {
     sample_names <- as.character(1:max(conc$index, na.rm = TRUE))
   }
 
   qp <- conc |>
-    dplyr::mutate(sample_name = ifelse(.data$sample_type == "unknown", sample_names[.data$index], paste("Standard", .data$index)))
+    dplyr::mutate(sample_name = ifelse(
+                    .data$sample_type == "unknown",
+                    sample_names[.data$index],
+                    paste("Standard", .data$index))
+                  )
 
   list(fit = fit, qp = qp, gp = abs)
 }
@@ -71,9 +84,15 @@ qp_tidy <- function(x, replicate_orientation, max_unknowns) {
                labels = c("standard", "unknown"), break_sections = FALSE) |>
     gplate::gp_sec(name = "index", nrow2, ncol2, break_sections = FALSE) |>
     gplate::gp_serve() |>
-    dplyr::mutate(index = as.numeric(.data$index),
-                  conc = ifelse(.data$index > 1, 2^(.data$index - 5), 0),
-                  conc = ifelse(.data$sample_type == "standard", .data$conc, NA_real_))
+    dplyr::mutate(
+             index = as.numeric(.data$index),
+             conc = ifelse(.data$index > 1, 2^(.data$index - 5), 0),
+             conc = ifelse(
+               .data$sample_type == "standard",
+               .data$conc,
+               NA_real_
+             )
+           )
 }
 
 
@@ -87,14 +106,26 @@ qp_calc_abs_mean <- function(x) {
     dplyr::select(-.data$data) |>
     tidyr::unnest(.data$mean_no_outlier) |>
     dplyr::group_by(.data$sample_type, .data$index) |>
-    dplyr::mutate(no_out_mean = mean(.data$value[!.data$is_suspect], na.rm = TRUE),
-                  no_out_sd = stats::sd(.data$value[!.data$is_suspect], na.rm = TRUE),
-                  keep = ifelse(abs(.data$value - .data$no_out_mean) > 3 * .data$no_out_sd, FALSE, TRUE),
+    dplyr::mutate(
+             no_out_mean = mean(
+               .data$value[!.data$is_suspect],
+               na.rm = TRUE
+             ),
+             no_out_sd = stats::sd(
+                                  .data$value[!.data$is_suspect],
+                                  na.rm = TRUE
+                                ),
+             ##FIXME This SHOULD work if I just ! the output of the first arg
+             keep = ifelse(
+               abs(.data$value - .data$no_out_mean) > 3 * .data$no_out_sd,
+               FALSE,
+               TRUE
+             ),
                   log_abs = log2(.data$value)) |>
     dplyr::ungroup()
 }
 
-find_mean <- function(df){
+find_mean <- function(df) {
   sample_hclust <- df$value |>
     stats::dist() |>
     stats::hclust()
@@ -119,7 +150,11 @@ qp_calc_conc <- function(x, fit) {
     dplyr::bind_cols(.pred = stats::predict(fit, x)) |>
     tidyr::unnest(dplyr::everything()) |>
     dplyr::group_by(.data$sample_type, .data$index) |>
-    dplyr::mutate(true_mean = ifelse(.data$sample_type == "standard", log2(.data$conc + 0.5), mean(.data$.pred[.data$keep])),
+    dplyr::mutate(true_mean = ifelse(
+                    .data$sample_type == "standard",
+                    log2(.data$conc + 0.5),
+                    mean(.data$.pred[.data$keep])
+                  ),
                   pred_conc = (2^.data$true_mean) - .5) |>
     dplyr::ungroup()
 }
@@ -131,12 +166,17 @@ qp_calc_conc <- function(x, fit) {
 #' @param target_conc Target concentration in (mg/mL) protein
 #' @param target_vol Target volume in uL
 #'
-#' @return A list, where the `qp` item has volumes of lysate and volumes of H2O to add.
+#' @return A list, where the `qp` item has volumes of lysate and volumes of H2O
+#' to add.
 #' @export
 qp_calc_dil <- function(x, target_conc, target_vol) {
   x$qp <- x$qp |>
     dplyr::rowwise() |>
-    dplyr::mutate(.temp = list(dilute(.data$pred_conc, target_conc, target_vol, quiet = TRUE))) |>
+    dplyr::mutate(
+             .temp = list(
+               dilute(.data$pred_conc, target_conc, target_vol, quiet = TRUE)
+             )
+           ) |>
     tidyr::unnest_wider(.data$.temp)
   x
 }
@@ -152,7 +192,10 @@ make_qp_plate_view <- function(x) {
   x$gp |>
     gplate::gp_plot(.data$value) +
     ggplot2::geom_point(ggplot2::aes(color = .data$value), size = 20) +
-    ggplot2::geom_text(ggplot2::aes(label = round(.data$value, 2)), color = "black") +
+    ggplot2::geom_text(
+               ggplot2::aes(label = round(.data$value, 2)),
+               color = "black"
+             ) +
     ggplot2::scale_color_gradient(low = "darkseagreen1", high = "mediumpurple3")
 }
 
@@ -167,7 +210,9 @@ make_qp_standard_plot <- function(x) {
                    y = .data$true_mean,
                    color = .data$sample_type,
                    shape = .data$keep)) +
-    ggplot2::scale_color_viridis_d(option = "viridis", end = 0.8, direction = -1) +
+    ggplot2::scale_color_viridis_d(
+               option = "viridis", end = 0.8, direction = -1
+             ) +
     ggplot2::geom_abline(intercept = x$fit$coefficients[1],
                 slope = x$fit$coefficients[2],
                 size = 2,

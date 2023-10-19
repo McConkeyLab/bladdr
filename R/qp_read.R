@@ -42,7 +42,7 @@ qp_read.spectramax <- function(x, ...) {
   gp <- x$data[[plate_index]]$data
 
   if ("value" %in% colnames(gplate::well_data(gp))) {
-    rlang::abort("Data already has a 'value' column, which is not expected from a normal SPECTRAmax file")
+    rlang::abort("SPECTRAmax has an unexpected 'value' column")
   } else {
     wd <- gplate::well_data(gp)
     wd$value <- wd$nm562
