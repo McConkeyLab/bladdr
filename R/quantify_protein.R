@@ -52,43 +52,6 @@ qp <- function(x, replicate_orientation = c("h", "v"), sample_names = NULL, remo
   list(fit = fit, qp = qp, gp = abs)
 }
 
-# Read in data -----------------------------------------------------------------
-#' Read in data into a common quantify protein format
-#'
-#' @param x A `gp`, `data.frame`/`tibble`, or character path to a raw SPECTRAmax .xls(x)/.txt
-#' @param ... Unused
-#'
-#' @return A `gp`
-qp_read <- function(x, ...) {
-  UseMethod("qp_read")
-}
-
-#' @export
-#' @rdname qp_read
-qp_read.character <- function(x, ...) {
-  mop::read_spectramax(x, ...) |> qp_read.spectramax()
-}
-
-#' @export
-#' @rdname qp_read
-qp_read.data.frame <- function(x, ...) {
-  gplate::as_gp(x)
-}
-
-#' @export
-#' @rdname qp_read
-qp_read.gp <- function(x, ...) {
-  x
-}
-
-#' @export
-#' @rdname qp_read
-qp_read.spectramax <- function(x, ...) {
-  if (!(562 %in% x$wavelengths)) rlang::warn("x$wavelengths does not contain 562")
-
-  x$data$data[which(x$data$type == "plate")][[1]]
-}
-
 # Tidy qp gp according to replicate orientation --------------------------------
 qp_tidy <- function(x, replicate_orientation, max_unknowns) {
   if (replicate_orientation == "v") {
