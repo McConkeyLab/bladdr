@@ -4,6 +4,7 @@
 #' @param ... Unused
 #'
 #' @return A `gp`
+#' @export
 qp_read <- function(x, ...) {
   UseMethod("qp_read")
 }
