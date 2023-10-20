@@ -95,53 +95,61 @@ qp_tidy <- function(x, replicate_orientation) {
 # Calculate outlier-free absorbance means --------------------------------------
 
 qp_calc_abs_mean <- function(x, remove_outliers) {
-
-  standards <- dplyr::filter(x, .data$sample_type == "standard")
-  unknowns <- dplyr::filter(x, .data$sample_type == "unknown")
-
-  if (remove_outliers %in% c("all", "standards")) {
-    standards <- calc_mean
-  }
-
-
-
+  standards <- x |>
+    dplyr::filter(.data$sample_type == "standard") |>
+    calc_mean(remove_outliers %in% c("all", "standards"))
+  unknowns <- x |>
+    dplyr::filter(.data$sample_type == "unknown") |>
+    calc_mean(remove_outliers %in% c("all", "samples"))
+  rbind(standards, unknowns)
 }
 
 calc_mean <- function(df, remove_outliers) {
+  df <- dplyr::group_by(df, .data$sample_type, .data$index)
   if (remove_outliers) {
     df <- df |>
-      tidyr::nest(.by = c("sample_type", "index", "conc")) |>
-      dplyr::mutate(data = purrr::map(.data$data, find_outliers)) |>
-      tidyr::unnest() |>
-      dplyr::group_by(.data$sample_type, .data$index) |>
       dplyr::mutate(
-        mean = mean(.data$value[!.data$is_suspect], na.rm = TRUE),
-        sd = stats::sd(.data$value[!.data$is_suspect], na.rm = TRUE),
-        keep = !(abs(.data$value - .data$mean) > 3 * .data$sd)
+        is_outlier = mark_outlier(.data$value),
+        mean = mean(.data$value[!.data$is_outlier], na.rm = TRUE)
       )
-    )
   } else {
     df <- df |>
-      dplyr::group_by(.data$sample_type, .data$index) |>
-      dplyr::mutate(mean = mean(.data$value, na.rm = TRUE))
+      dplyr::mutate(
+        is_outlier = NA,
+        mean = mean(.data$value, na.rm = TRUE)
+      )
   }
-
   df <- df |>
     dplyr::mutate(log_abs = log2(.data$value)) |>
     dplyr::ungroup()
 }
 
-# TODO Could probably retool this so nesting isn't required
-# Should just take and return a numeric vector
-find_outliers <- function(df) {
-  sample_hclust <- df$value |>
-    stats::dist() |>
-    stats::hclust()
-  suspect_index <- sample_hclust$merge[nrow(df) - 1, 1] |>
-    abs()
-  df$is_suspect <- FALSE
-  df$is_suspect[suspect_index] <- TRUE
-  df
+mark_suspect <- function(nums) {
+  # Marking a suspect with 2 or fewer samples doesn't make sense
+  na_index <- which(!is.na(nums))
+  no_na <- na.omit(nums)
+  if (length(no_na) <= 2) return(rep(FALSE, length(nums)))
+  hc <- stats::hclust(stats::dist(no_na))
+  no_na_index <- abs(hc$merge[length(no_na) -1, 1])
+  suspect_index <- na_index[no_na_index]
+  out <- rep(FALSE, length(nums))
+  out[suspect_index] <- TRUE
+  out
+}
+
+mark_outlier <- function(nums) {
+  marked <- mark_suspect(nums)
+  if (!any(marked)) return(marked)
+  no_suspect <- nums[!marked]
+  suspect <- nums[marked]
+  mean_no_suspect <- mean(no_suspect, na.rm = TRUE)
+  sd_no_suspect <- sd(no_suspect, na.rm = TRUE)
+  suspect_is_outlier <- abs(suspect - mean_no_suspect) > (3 * sd_no_suspect)
+  if (suspect_is_outlier) {
+    return(marked)
+  } else {
+    return(rep(FALSE, length(nums)))
+  }
 }
 
 # Fit conc ~ abs using standards absorbances -----------------------------------
