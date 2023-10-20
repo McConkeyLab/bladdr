@@ -66,7 +66,11 @@ qp <- function(x,
 }
 
 # Tidy qp gp according to replicate orientation --------------------------------
-qp_tidy <- function(x, replicate_orientation, max_unknowns) {
+qp_tidy <- function(x, replicate_orientation) {
+  max_samples <- gplate::wells(x) %/% 3
+  n_standards <- 7
+  max_unknowns <- max_samples - n_standards
+
   if (replicate_orientation == "v") {
     nrow <- nrow2 <- 3
     ncol <- c(7, max_unknowns)
@@ -99,6 +103,7 @@ qp_tidy <- function(x, replicate_orientation, max_unknowns) {
 # Calculate outlier-free absorbance means --------------------------------------
 
 qp_calc_abs_mean <- function(x) {
+
   x |>
     dplyr::group_by(.data$sample_type, .data$index, .data$conc) |>
     tidyr::nest() |>
