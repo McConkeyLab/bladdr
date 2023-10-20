@@ -26,7 +26,6 @@ qp <- function(x,
   remove_outliers <- rlang::arg_match(remove_outliers)
 
   abs <- qp_read(x)
-
   abs_tidy <- qp_tidy(abs, replicate_orientation)
   mean_abs <- qp_calc_abs_mean(abs_tidy)
 
@@ -36,10 +35,9 @@ qp <- function(x,
   conc <- qp_calc_conc(mean_abs, fit)
 
   if (remove_empty) {
-    conc <-
-      dplyr::filter(
-               conc, .data$pred_conc > 0 | .data$sample_type == "standard"
-             )
+    conc <- dplyr::filter(
+      conc, .data$pred_conc > 0 | .data$sample_type == "standard"
+    )
   }
 
   if (!is.null(sample_names)) {
@@ -79,18 +77,18 @@ qp_tidy <- function(x, replicate_orientation) {
 
   x |>
     gplate::gp_sec(name = "sample_type", nrow, ncol, wrap = TRUE, flow = flow,
-               labels = c("standard", "unknown"), break_sections = FALSE) |>
+      labels = c("standard", "unknown"), break_sections = FALSE) |>
     gplate::gp_sec(name = "index", nrow2, ncol2, break_sections = FALSE) |>
     gplate::gp_serve() |>
     dplyr::mutate(
-             index = as.numeric(.data$index),
-             conc = ifelse(.data$index > 1, 2^(.data$index - 5), 0),
-             conc = ifelse(
-               .data$sample_type == "standard",
-               .data$conc,
-               NA_real_
-             )
-           )
+      index = as.numeric(.data$index),
+      conc = ifelse(.data$index > 1, 2^(.data$index - 5), 0),
+      conc = ifelse(
+        .data$sample_type == "standard",
+        .data$conc,
+        NA_real_
+      )
+    )
 }
 
 
