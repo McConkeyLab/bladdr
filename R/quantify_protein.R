@@ -20,7 +20,7 @@ qp <- function(x,
                replicate_orientation = c("h", "v"),
                sample_names = NULL,
                remove_empty = TRUE,
-               remove_outliers = c("all", "samples", "standards")) {
+               remove_outliers = c("all", "samples", "standards", "none")) {
 
   replicate_orientation <- rlang::arg_match(replicate_orientation)
   remove_outliers <- rlang::arg_match(remove_outliers)
@@ -96,35 +96,46 @@ qp_tidy <- function(x, replicate_orientation) {
 
 # Calculate outlier-free absorbance means --------------------------------------
 
-qp_calc_abs_mean <- function(x) {
+qp_calc_abs_mean <- function(x, remove_outliers) {
 
-  x |>
-    dplyr::group_by(.data$sample_type, .data$index, .data$conc) |>
-    tidyr::nest() |>
-    dplyr::mutate(mean_no_outlier = purrr::map(.data$data, find_mean)) |>
-    dplyr::select(-.data$data) |>
-    tidyr::unnest(.data$mean_no_outlier) |>
-    dplyr::group_by(.data$sample_type, .data$index) |>
-    dplyr::mutate(
-             no_out_mean = mean(
-               .data$value[!.data$is_suspect],
-               na.rm = TRUE
-             ),
-             no_out_sd = stats::sd(
-                                  .data$value[!.data$is_suspect],
-                                  na.rm = TRUE
-                                ),
-             ##FIXME This SHOULD work if I just ! the output of the first arg
-             keep = ifelse(
-               abs(.data$value - .data$no_out_mean) > 3 * .data$no_out_sd,
-               FALSE,
-               TRUE
-             ),
-                  log_abs = log2(.data$value)) |>
+  standards <- dplyr::filter(x, .data$sample_type == "standard")
+  unknowns <- dplyr::filter(x, .data$sample_type == "unknown")
+
+  if (remove_outliers %in% c("all", "standards")) {
+    standards <- calc_mean
+  }
+
+
+
+}
+
+calc_mean <- function(df, remove_outliers) {
+  if (remove_outliers) {
+    df <- df |>
+      tidyr::nest(.by = c("sample_type", "index", "conc")) |>
+      dplyr::mutate(data = purrr::map(.data$data, find_outliers)) |>
+      tidyr::unnest() |>
+      dplyr::group_by(.data$sample_type, .data$index) |>
+      dplyr::mutate(
+        mean = mean(.data$value[!.data$is_suspect], na.rm = TRUE),
+        sd = stats::sd(.data$value[!.data$is_suspect], na.rm = TRUE),
+        keep = !(abs(.data$value - .data$mean) > 3 * .data$sd)
+      )
+    )
+  } else {
+    df <- df |>
+      dplyr::group_by(.data$sample_type, .data$index) |>
+      dplyr::mutate(mean = mean(.data$value, na.rm = TRUE))
+  }
+
+  df <- df |>
+    dplyr::mutate(log_abs = log2(.data$value)) |>
     dplyr::ungroup()
 }
 
-find_mean <- function(df) {
+# TODO Could probably retool this so nesting isn't required
+# Should just take and return a numeric vector
+find_outliers <- function(df) {
   sample_hclust <- df$value |>
     stats::dist() |>
     stats::hclust()
@@ -132,7 +143,7 @@ find_mean <- function(df) {
     abs()
   df$is_suspect <- FALSE
   df$is_suspect[suspect_index] <- TRUE
-  tibble::tibble(value = df$value, is_suspect = df$is_suspect)
+  df
 }
 
 # Fit conc ~ abs using standards absorbances -----------------------------------
