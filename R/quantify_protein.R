@@ -19,19 +19,19 @@
 qp <- function(x,
                replicate_orientation = c("h", "v"),
                sample_names = NULL,
-               remove_empty = TRUE) {
+               remove_empty = TRUE,
+               remove_outliers = c("all", "samples", "standards")) {
 
   replicate_orientation <- rlang::arg_match(replicate_orientation)
+  remove_outliers <- rlang::arg_match(remove_outliers)
 
   abs <- qp_read(x)
 
   abs_tidy <- qp_tidy(abs, replicate_orientation)
   mean_abs <- qp_calc_abs_mean(abs_tidy)
 
-  fit <- mean_abs |>
-    dplyr::filter(.data$sample_type == "standard") |>
-    dplyr::filter(.data$keep) |>
-    qp_fit()
+  standards <- dplyr::filter(.data$sample_type == "standard", .data$keep)
+  fit <- qp_fit(standards, remove_outliers)
 
   conc <- qp_calc_conc(mean_abs, fit)
 
@@ -136,9 +136,14 @@ find_mean <- function(df) {
 }
 
 # Fit conc ~ abs using standards absorbances -----------------------------------
-qp_fit <- function(standards) {
-  fit_data <- standards |>
-    dplyr::mutate(log_conc = log2(.data$conc + .5))
+qp_fit <- function(x, remove_outliers) {
+  standards <- dplyr::filter(x, .data$sample_type == "standard")
+
+  if (remove_outliers %in% c("all", "standards")) {
+    standards <- dplyr::filter(x, .data$keep)
+  }
+
+  fit_data <- dplyr::mutate(standards, log_conc = log2(.data$conc + .5))
 
   stats::lm(log_conc ~ log_abs, data = fit_data)
 }
