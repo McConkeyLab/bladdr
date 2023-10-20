@@ -226,12 +226,19 @@ make_qp_plate_view <- function(x) {
 make_qp_standard_plot <- function(x) {
 
   plot_data <- x$qp |>
-    dplyr::mutate(outlier = !f_or_na(.data$is_outlier))
+    dplyr::mutate(
+      outlier = !f_or_na(.data$is_outlier),
+      y = ifelse(
+        .data$sample_type == "standard",
+        log2(.data$conc + 0.5),
+        log2(.data$.pred_conc_mean + 0.5)
+      )
+    )
 
   ggplot2::ggplot(
     plot_data,
     ggplot2::aes(
-      x = .data$log_abs, y = log2(.data$.pred_conc_mean + 0.5),
+      x = .data$log_abs, y = .data$y,
       color = .data$sample_type,
       shape = .data$outlier
     )) +
