@@ -20,26 +20,21 @@ qp <- function(x,
                replicate_orientation = c("h", "v"),
                sample_names = NULL,
                remove_empty = TRUE,
-               remove_outliers = c("all", "samples", "standards")) {
+               remove_outliers = c("all", "samples", "standards", "none")) {
 
   replicate_orientation <- rlang::arg_match(replicate_orientation)
   remove_outliers <- rlang::arg_match(remove_outliers)
 
   abs <- qp_read(x)
-
   abs_tidy <- qp_tidy(abs, replicate_orientation)
-  mean_abs <- qp_calc_abs_mean(abs_tidy)
-
-  standards <- dplyr::filter(.data$sample_type == "standard", .data$keep)
-  fit <- qp_fit(standards, remove_outliers)
-
+  mean_abs <- qp_calc_abs_mean(abs_tidy, remove_outliers)
+  fit <- qp_fit(mean_abs)
   conc <- qp_calc_conc(mean_abs, fit)
 
   if (remove_empty) {
-    conc <-
-      dplyr::filter(
-               conc, .data$pred_conc > 0 | .data$sample_type == "standard"
-             )
+    conc <- dplyr::filter(
+      conc, .data$.pred_conc > 0 | .data$sample_type == "standard"
+    )
   }
 
   if (!is.null(sample_names)) {
@@ -79,88 +74,107 @@ qp_tidy <- function(x, replicate_orientation) {
 
   x |>
     gplate::gp_sec(name = "sample_type", nrow, ncol, wrap = TRUE, flow = flow,
-               labels = c("standard", "unknown"), break_sections = FALSE) |>
+      labels = c("standard", "unknown"), break_sections = FALSE) |>
     gplate::gp_sec(name = "index", nrow2, ncol2, break_sections = FALSE) |>
     gplate::gp_serve() |>
     dplyr::mutate(
-             index = as.numeric(.data$index),
-             conc = ifelse(.data$index > 1, 2^(.data$index - 5), 0),
-             conc = ifelse(
-               .data$sample_type == "standard",
-               .data$conc,
-               NA_real_
-             )
-           )
+      index = as.numeric(.data$index),
+      conc = ifelse(.data$index > 1, 2^(.data$index - 5), 0),
+      conc = ifelse(
+        .data$sample_type == "standard",
+        .data$conc,
+        NA_real_
+      )
+    )
 }
 
 
 # Calculate outlier-free absorbance means --------------------------------------
 
-qp_calc_abs_mean <- function(x) {
+qp_calc_abs_mean <- function(x, remove_outliers) {
+  standards <- x |>
+    dplyr::filter(.data$sample_type == "standard") |>
+    calc_mean(remove_outliers %in% c("all", "standards"))
+  unknowns <- x |>
+    dplyr::filter(.data$sample_type == "unknown") |>
+    calc_mean(remove_outliers %in% c("all", "samples"))
+  rbind(standards, unknowns)
+}
 
-  x |>
-    dplyr::group_by(.data$sample_type, .data$index, .data$conc) |>
-    tidyr::nest() |>
-    dplyr::mutate(mean_no_outlier = purrr::map(.data$data, find_mean)) |>
-    dplyr::select(-.data$data) |>
-    tidyr::unnest(.data$mean_no_outlier) |>
-    dplyr::group_by(.data$sample_type, .data$index) |>
-    dplyr::mutate(
-             no_out_mean = mean(
-               .data$value[!.data$is_suspect],
-               na.rm = TRUE
-             ),
-             no_out_sd = stats::sd(
-                                  .data$value[!.data$is_suspect],
-                                  na.rm = TRUE
-                                ),
-             ##FIXME This SHOULD work if I just ! the output of the first arg
-             keep = ifelse(
-               abs(.data$value - .data$no_out_mean) > 3 * .data$no_out_sd,
-               FALSE,
-               TRUE
-             ),
-                  log_abs = log2(.data$value)) |>
+calc_mean <- function(df, remove_outliers) {
+  df <- dplyr::group_by(df, .data$sample_type, .data$index)
+  if (remove_outliers) {
+    df <- df |>
+      dplyr::mutate(
+        is_outlier = mark_outlier(.data$value),
+        mean = mean(.data$value[!.data$is_outlier], na.rm = TRUE)
+      )
+  } else {
+    df <- df |>
+      dplyr::mutate(
+        is_outlier = NA,
+        mean = mean(.data$value, na.rm = TRUE)
+      )
+  }
+  #FIXME log calculation probably does not belong here
+  df <- df |>
+    dplyr::mutate(log_abs = log2(.data$value)) |>
     dplyr::ungroup()
 }
 
-find_mean <- function(df) {
-  sample_hclust <- df$value |>
-    stats::dist() |>
-    stats::hclust()
-  suspect_index <- sample_hclust$merge[nrow(df) - 1, 1] |>
-    abs()
-  df$is_suspect <- FALSE
-  df$is_suspect[suspect_index] <- TRUE
-  tibble::tibble(value = df$value, is_suspect = df$is_suspect)
+mark_suspect <- function(nums) {
+  # Marking a suspect with 2 or fewer samples doesn't make sense
+  na_index <- which(!is.na(nums))
+  no_na <- na.omit(nums)
+  if (length(no_na) <= 2) return(rep(FALSE, length(nums)))
+  hc <- stats::hclust(stats::dist(no_na))
+  no_na_index <- abs(hc$merge[length(no_na) -1, 1])
+  suspect_index <- na_index[no_na_index]
+  out <- rep(FALSE, length(nums))
+  out[suspect_index] <- TRUE
+  out
+}
+
+mark_outlier <- function(nums) {
+  marked <- mark_suspect(nums)
+  if (!any(marked)) return(marked)
+  no_suspect <- nums[!marked]
+  suspect <- nums[marked]
+  mean_no_suspect <- mean(no_suspect, na.rm = TRUE)
+  sd_no_suspect <- sd(no_suspect, na.rm = TRUE)
+  suspect_is_outlier <- abs(suspect - mean_no_suspect) > (3 * sd_no_suspect)
+  if (suspect_is_outlier) {
+    return(marked)
+  } else {
+    return(rep(FALSE, length(nums)))
+  }
 }
 
 # Fit conc ~ abs using standards absorbances -----------------------------------
-qp_fit <- function(x, remove_outliers) {
-  standards <- dplyr::filter(x, .data$sample_type == "standard")
-
-  if (remove_outliers %in% c("all", "standards")) {
-    standards <- dplyr::filter(x, .data$keep)
-  }
-
+qp_fit <- function(x) {
+  standards <- x |>
+    dplyr::filter(
+      .data$sample_type == "standard",
+      f_or_na(.data$is_outlier)
+    )
   fit_data <- dplyr::mutate(standards, log_conc = log2(.data$conc + .5))
-
   stats::lm(log_conc ~ log_abs, data = fit_data)
 }
 
 # Predict concentrations from standards fit ------------------------------------
 qp_calc_conc <- function(x, fit) {
-  x |>
-    dplyr::bind_cols(.pred = stats::predict(fit, x)) |>
-    tidyr::unnest(dplyr::everything()) |>
+  with_predictions <- dplyr::bind_cols(x, .pred = stats::predict(fit, x))
+  with_predictions |>
+    dplyr::mutate(.pred_conc = (2^.data$.pred) - 0.5) |>
     dplyr::group_by(.data$sample_type, .data$index) |>
-    dplyr::mutate(true_mean = ifelse(
-                    .data$sample_type == "standard",
-                    log2(.data$conc + 0.5),
-                    mean(.data$.pred[.data$keep])
-                  ),
-                  pred_conc = (2^.data$true_mean) - .5) |>
+    dplyr::mutate(
+      .pred_conc_mean = mean(.data$.pred_conc[which(f_or_na(.data$is_outlier))])
+    ) |>
     dplyr::ungroup()
+}
+
+f_or_na <- function(x) {
+  !x | is.na(x)
 }
 
 # Calculate Dilutions ----------------------------------------------------------
@@ -210,10 +224,24 @@ make_qp_plate_view <- function(x) {
 #' @return a `ggplot`
 #' @export
 make_qp_standard_plot <- function(x) {
-  ggplot2::ggplot(x$qp, ggplot2::aes(x = .data$log_abs,
-                   y = .data$true_mean,
-                   color = .data$sample_type,
-                   shape = .data$keep)) +
+
+  plot_data <- x$qp |>
+    dplyr::mutate(
+      outlier = !f_or_na(.data$is_outlier),
+      y = ifelse(
+        .data$sample_type == "standard",
+        log2(.data$conc + 0.5),
+        log2(.data$.pred_conc_mean + 0.5)
+      )
+    )
+
+  ggplot2::ggplot(
+    plot_data,
+    ggplot2::aes(
+      x = .data$log_abs, y = .data$y,
+      color = .data$sample_type,
+      shape = .data$outlier
+    )) +
     ggplot2::scale_color_viridis_d(
                option = "viridis", end = 0.8, direction = -1
              ) +
@@ -222,6 +250,6 @@ make_qp_standard_plot <- function(x) {
                 size = 2,
                 alpha = 0.2) +
     ggplot2::geom_point(size = 3, alpha = 0.7) +
-    ggplot2::scale_shape_manual(values = c(4, 16)) +
+    ggplot2::scale_shape_manual(values = c(16, 4)) +
     ggplot2::labs(x = "Log2(Absorbance)", y = "Log2(Concentration + 0.5)")
 }
