@@ -27,16 +27,13 @@ qp <- function(x,
 
   abs <- qp_read(x)
   abs_tidy <- qp_tidy(abs, replicate_orientation)
-  mean_abs <- qp_calc_abs_mean(abs_tidy)
-
-  standards <- dplyr::filter(.data$sample_type == "standard", .data$keep)
-  fit <- qp_fit(standards, remove_outliers)
-
+  mean_abs <- qp_calc_abs_mean(abs_tidy, remove_outliers)
+  fit <- qp_fit(mean_abs)
   conc <- qp_calc_conc(mean_abs, fit)
 
   if (remove_empty) {
     conc <- dplyr::filter(
-      conc, .data$pred_conc > 0 | .data$sample_type == "standard"
+      conc, .data$.pred_conc > 0 | .data$sample_type == "standard"
     )
   }
 
@@ -119,6 +116,7 @@ calc_mean <- function(df, remove_outliers) {
         mean = mean(.data$value, na.rm = TRUE)
       )
   }
+  #FIXME log calculation probably does not belong here
   df <- df |>
     dplyr::mutate(log_abs = log2(.data$value)) |>
     dplyr::ungroup()
@@ -153,31 +151,30 @@ mark_outlier <- function(nums) {
 }
 
 # Fit conc ~ abs using standards absorbances -----------------------------------
-qp_fit <- function(x, remove_outliers) {
-  standards <- dplyr::filter(x, .data$sample_type == "standard")
-
-  if (remove_outliers %in% c("all", "standards")) {
-    standards <- dplyr::filter(x, .data$keep)
-  }
-
+qp_fit <- function(x) {
+  standards <- x |>
+    dplyr::filter(
+      .data$sample_type == "standard",
+      f_or_na(.data$is_outlier)
+    )
   fit_data <- dplyr::mutate(standards, log_conc = log2(.data$conc + .5))
-
   stats::lm(log_conc ~ log_abs, data = fit_data)
 }
 
 # Predict concentrations from standards fit ------------------------------------
 qp_calc_conc <- function(x, fit) {
-  x |>
-    dplyr::bind_cols(.pred = stats::predict(fit, x)) |>
-    tidyr::unnest(dplyr::everything()) |>
+  with_predictions <- dplyr::bind_cols(x, .pred = stats::predict(fit, x))
+  with_predictions |>
+    dplyr::mutate(.pred_conc = (2^.data$.pred) - 0.5) |>
     dplyr::group_by(.data$sample_type, .data$index) |>
-    dplyr::mutate(true_mean = ifelse(
-                    .data$sample_type == "standard",
-                    log2(.data$conc + 0.5),
-                    mean(.data$.pred[.data$keep])
-                  ),
-                  pred_conc = (2^.data$true_mean) - .5) |>
+    dplyr::mutate(
+      .pred_conc_mean = mean(.data$.pred_conc[which(f_or_na(.data$is_outlier))])
+    ) |>
     dplyr::ungroup()
+}
+
+f_or_na <- function(x) {
+  !x | is.na(x)
 }
 
 # Calculate Dilutions ----------------------------------------------------------
@@ -227,10 +224,17 @@ make_qp_plate_view <- function(x) {
 #' @return a `ggplot`
 #' @export
 make_qp_standard_plot <- function(x) {
-  ggplot2::ggplot(x$qp, ggplot2::aes(x = .data$log_abs,
-                   y = .data$true_mean,
-                   color = .data$sample_type,
-                   shape = .data$keep)) +
+
+  plot_data <- x$qp |>
+    dplyr::mutate(outlier = !f_or_na(.data$is_outlier))
+
+  ggplot2::ggplot(
+    plot_data,
+    ggplot2::aes(
+      x = .data$log_abs, y = log2(.data$.pred_conc_mean + 0.5),
+      color = .data$sample_type,
+      shape = .data$outlier
+    )) +
     ggplot2::scale_color_viridis_d(
                option = "viridis", end = 0.8, direction = -1
              ) +
@@ -239,6 +243,6 @@ make_qp_standard_plot <- function(x) {
                 size = 2,
                 alpha = 0.2) +
     ggplot2::geom_point(size = 3, alpha = 0.7) +
-    ggplot2::scale_shape_manual(values = c(4, 16)) +
+    ggplot2::scale_shape_manual(values = c(16, 4)) +
     ggplot2::labs(x = "Log2(Absorbance)", y = "Log2(Concentration + 0.5)")
 }
