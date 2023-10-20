@@ -25,14 +25,8 @@ qp <- function(x,
 
   abs <- qp_read(x)
 
-  # Derived constants
-  max_samples <- gplate::wells(abs) %/% 3
-  n_standards <- 7
-  max_unknowns <- max_samples - n_standards
-
-  mean_abs <- abs |>
-    qp_tidy(replicate_orientation, max_unknowns) |>
-    qp_calc_abs_mean()
+  abs_tidy <- qp_tidy(abs, replicate_orientation)
+  mean_abs <- qp_calc_abs_mean(abs_tidy)
 
   fit <- mean_abs |>
     dplyr::filter(.data$sample_type == "standard") |>
