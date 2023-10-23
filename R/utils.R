@@ -42,7 +42,21 @@ get_gene_expression <- function(dds, gene_indices, assay) {
 #' ggplot(dummy_rna_conc, aes(x = sample, y = conc)) +
 #'   geom_point() +
 #'   theme_tufte(10, use_gillsans = FALSE)
-theme_tufte <- function(font_size = 30, use_gillsans = TRUE) {
+theme_tufte <- function(font_size = 30,
+                        variant = c("sepia", "bw"),
+                        use_gillsans = TRUE) {
+  variant <- rlang::arg_match(variant)
+
+  if (variant == "sepia") {
+    bg <- "#FFFFF8"
+    fg <- "#BBBBB0"
+  }
+
+  if (variant == "bw") {
+    bg <- "#FFFFFF"
+    fg <- "#BBBBBB"
+  }
+
   font <- "sans"
 
   if (use_gillsans) {
@@ -55,10 +69,10 @@ theme_tufte <- function(font_size = 30, use_gillsans = TRUE) {
 
   ggplot2::theme(
     panel.grid = ggplot2::element_blank(),
-    panel.background = ggplot2::element_rect(fill = "#FFFFF8", color = "#CCCCCC"),
-    plot.background = ggplot2::element_rect(fill = "#FFFFF8"),
-    strip.background = ggplot2::element_rect(fill = "#BBBBB0"),
-    legend.background = ggplot2::element_rect(fill = "#FFFFF8"),
+    panel.background = ggplot2::element_rect(fill = bg, color = "#CCCCCC"),
+    plot.background = ggplot2::element_rect(fill = bg),
+    strip.background = ggplot2::element_rect(fill = fg),
+    legend.background = ggplot2::element_rect(fill = bg),
     legend.position = "top",
     legend.key = ggplot2::element_blank(),
     text = ggplot2::element_text(family = font, size = font_size)
