@@ -22,7 +22,8 @@ Imports:
     Microsoft365R,
     gplate,
     mop,
-    drc
+    drc,
+    fs
 Suggests:
     knitr,
     rmarkdown,
