@@ -21,7 +21,9 @@ get_gene_index <- function(dds, genes) {
   } else if (length(genes) != length(inds)) {
     found <- rownames(dds)[inds]
     missing <- setdiff(genes, found)
-    warning("Dataset does not contain gene: ", paste(missing, collapse = ", "), "\n")
+    warning(
+      "Dataset does not contain gene: ", paste(missing, collapse = ", "), "\n"
+    )
   }
   inds
 }
@@ -29,8 +31,10 @@ get_gene_index <- function(dds, genes) {
 #' Get expression of gene by indices in a dds
 #'
 #' @param dds A DESeqDataSet
-#' @param gene_indices integer vector that refer to the row number of genes to retrieve
-#' @param assay integer, assay index that refers to the desired expression data slot
+#' @param gene_indices integer vector that refer to the row number of genes to
+#'   retrieve
+#' @param assay integer, assay index that refers to the desired expression data
+#'   slot
 #'
 #' @return A dataframe where row names are sample names, and column names are
 #'   gene names
@@ -69,7 +73,9 @@ theme_tufte <- function(font_size = 30, use_gillsans = TRUE) {
 
   ggplot2::theme(
     panel.grid = ggplot2::element_blank(),
-    panel.background = ggplot2::element_rect(fill = "#FFFFF8", color = "#CCCCCC"),
+    panel.background = ggplot2::element_rect(
+      fill = "#FFFFF8", color = "#CCCCCC"
+    ),
     plot.background = ggplot2::element_rect(fill = "#FFFFF8"),
     strip.background = ggplot2::element_rect(fill = "#BBBBB0"),
     legend.background = ggplot2::element_rect(fill = "#FFFFF8"),
@@ -83,18 +89,26 @@ theme_tufte <- function(font_size = 30, use_gillsans = TRUE) {
 #'
 #' @param c1 Numeric. Initial concentration of sample.
 #' @param c2 Numeric. Target concentration of sample.
-#' @param v2 Numeric. Target final volume of sample. If `round_for_pipettes = TRUE`, assumes volume is mL.
-#' @param round_for_pipettes Logical. If TRUE, rounds values to the accuracy of standard pipettes using `make_pipette_vol`.
-#' @param quiet Logical. If FALSE, will warn when dilution is impossible to do without concentrating sample.
+#' @param v2 Numeric. Target final volume of sample. If `round_for_pipettes =
+#'   TRUE`, assumes volume is mL.
+#' @param round_for_pipettes Logical. If TRUE, rounds values to the accuracy of
+#'   standard pipettes using `make_pipette_vol`.
+#' @param quiet Logical. If FALSE, will warn when dilution is impossible to do
+#'   without concentrating sample.
 #'
-#' @return a named list, with `sample_to_add` as the volume of sample to add, and `add_to` as the volume to dilute the sample into.
+#' @return a named list, with `sample_to_add` as the volume of sample to add,
+#'   and `add_to` as the volume to dilute the sample into.
 #' @export
 #'
 #' @examples
 #' dilute(203, 70, 10)
 #' dilute(203, 70, 10, round_for_pipettes = FALSE)
 #'
-dilute <- function(c1, c2 = min(c1), v2, round_for_pipettes = TRUE, quiet = FALSE) {
+dilute <- function(c1,
+                   c2 = min(c1),
+                   v2,
+                   round_for_pipettes = TRUE,
+                   quiet = FALSE) {
   if (any(c2 > c1) & !quiet) {
     warning("This dilution is impossible without concentrating the sample.")
   }
@@ -141,7 +155,9 @@ make_pipette_vol <- function(vol) {
 get_gbci <- function(path, dest = NULL, overwrite = FALSE) {
   drive <- get_gbci_drive_connection()
   if (is.null(drive$get_item_properties(path)$folder)) {
-    get_gbci_file(path = path, dest = dest, overwrite = overwrite, drive = drive)
+    get_gbci_file(
+      path = path, dest = dest, overwrite = overwrite, drive = drive
+    )
   } else {
     get_gbci_dir(path = path, dest = dest, overwrite = overwrite, drive = drive)
   }
@@ -179,7 +195,8 @@ get_gbci_file <- function(path, dest = NULL, overwrite = FALSE, drive = NULL) {
 #'
 #' @param path Path to the directory on SharePoint
 #' @param dest Path to where the file should be downloaded
-#' @param create_dir Logical. If the destination directory does not exist, create it?
+#' @param create_dir Logical. If the destination directory does not exist,
+#'   create it?
 #' @inheritParams get_gbci_file
 #'
 #' @return Returns `dest`
@@ -207,7 +224,11 @@ get_gbci_dir <- function(path,
     dir.create(dest, recursive = TRUE, showWarnings = FALSE)
   }
 
-  apply(items, 1, get_recursive, drive = drive, og_path = path, dest = dest, overwrite = overwrite, simplify = FALSE)
+  apply(
+    items, 1, get_recursive,
+    drive = drive, og_path = path, dest = dest, overwrite = overwrite,
+    simplify = FALSE
+  )
 
   fs::path(dest, stringr::str_extract(path, "[^/]*$"))
 }
@@ -229,7 +250,9 @@ get_recursive <- function(item, drive, og_path, dest, overwrite) {
 
 #' @export
 list_gbci_dir <- function(path, recursive = FALSE) {
-  sp <- Microsoft365R::get_sharepoint_site(site_url = "https://livejohnshopkins.sharepoint.com/sites/GBCIStorage")
+  sp <- Microsoft365R::get_sharepoint_site(
+    site_url = "https://livejohnshopkins.sharepoint.com/sites/GBCIStorage"
+  )
   drive <- sp$get_drive()
   if (is.null(drive$get_item_properties(path)$folder)) {
     stop("Specified path is not a directory")
