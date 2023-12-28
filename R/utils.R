@@ -1,3 +1,17 @@
+get_username_from_env <- function() {
+  usr <- Sys.getenv("GBCI_USERNAME")
+  ifelse(usr == "", username_env_helper(), usr)
+}
+
+username_env_helper <- function() {
+  rlang::abort(c(
+    "The environmental username GBCI_USERNAME is unset.",
+    "To set for future R sessions, add the following line to your .Rprofile:",
+    "Sys.setenv(GBCI_USERNAME = \"YOUR-GBCI-USERNAME\")",
+    "Open your .Rprofile with usethis::edit_r_profile"
+  ))
+}
+
 #' Get indices of genes by name in a dds
 #' @noRd
 get_gene_index <- function(dds, genes) {

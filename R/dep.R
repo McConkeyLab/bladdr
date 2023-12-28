@@ -22,7 +22,6 @@ qp <- function(x,
                remove_outliers = c("all", "samples", "standards", "none")) {
   lifecycle::deprecate_stop("1.0.0", "qp()", "qp::qp()")
 }
-
 # Fit conc ~ abs using standards absorbances -----------------------------------
 qp_fit <- function(x) {
   lifecycle::deprecate_stop("1.0.0", "qp_fit()", "qp::qp_fit()")
@@ -66,7 +65,6 @@ make_qp_standard_plot <- function(x) {
     "1.0.0", "make_qp_standard_plot()", "qp::qp_plot_standards()"
   )
 }
-
 #' Read in data into a common quantify protein format
 #' @param x A `gp`, `data.frame`/`tibble`, or character
 #' path to a raw SPECTRAmax .xls(x)/.txt
