@@ -13,12 +13,15 @@ dilute(c1, c2 = min(c1), v2, round_for_pipettes = TRUE, quiet = FALSE)
 
 \item{v2}{Numeric. Target final volume of sample. If \code{round_for_pipettes = TRUE}, assumes volume is mL.}
 
-\item{round_for_pipettes}{Logical. If TRUE, rounds values to the accuracy of standard pipettes using \code{make_pipette_vol}.}
+\item{round_for_pipettes}{Logical. If TRUE, rounds values to the accuracy of
+standard pipettes using \code{make_pipette_vol}.}
 
-\item{quiet}{Logical. If FALSE, will warn when dilution is impossible to do without concentrating sample.}
+\item{quiet}{Logical. If FALSE, will warn when dilution is impossible to do
+without concentrating sample.}
 }
 \value{
-a named list, with \code{sample_to_add} as the volume of sample to add, and \code{add_to} as the volume to dilute the sample into.
+a named list, with \code{sample_to_add} as the volume of sample to add,
+and \code{add_to} as the volume to dilute the sample into.
 }
 \description{
 Calculate dilution from known concentrations
