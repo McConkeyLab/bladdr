@@ -2,7 +2,7 @@
 % Please edit documentation in R/get.R
 \name{get_pcr}
 \alias{get_pcr}
-\title{Get a variety of raw data}
+\title{Get from a raw data folder}
 \usage{
 get_pcr(name, user_name = NULL, ...)
 }

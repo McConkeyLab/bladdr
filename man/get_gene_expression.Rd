@@ -9,9 +9,11 @@ get_gene_expression(dds, gene_indices, assay)
 \arguments{
 \item{dds}{A DESeqDataSet}
 
-\item{gene_indices}{integer vector that refer to the row number of genes to retrieve}
+\item{gene_indices}{integer vector that refer to the row number of genes to
+retrieve}
 
-\item{assay}{integer, assay index that refers to the desired expression data slot}
+\item{assay}{integer, assay index that refers to the desired expression data
+slot}
 }
 \value{
 A dataframe where row names are sample names, and column names are

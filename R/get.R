@@ -7,7 +7,7 @@ get_f <- function(sub_dir) {
   }
 }
 
-#' Get a variety of raw data
+#' Get from a raw data folder
 #'
 #' A collection of thin wrappers around `get_gbci`
 #'

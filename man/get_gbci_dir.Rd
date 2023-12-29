@@ -19,7 +19,8 @@ get_gbci_dir(
 
 \item{overwrite}{Logical. Should files be overwritten if they already exist?}
 
-\item{create_dir}{Logical. If the destination directory does not exist, create it?}
+\item{create_dir}{Logical. If the destination directory does not exist,
+create it?}
 
 \item{drive}{Optional. A \code{Microsoft365R::ms_drive}. Can be passed from parent
 functions to avoid multiple calls, which can be faster.}
