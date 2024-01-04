@@ -151,80 +151,70 @@ make_pipette_vol <- function(vol) {
   vol
 }
 
+
+#' Get a directory or file from the GBCI SharePoint
+#'
+#' This function will call either `get_gbci_file` or `get_gbci_dir` downstream
+#' depending on the path argument.
+#'
+#' @param path Path to file or directory on SharePoint
+#' @param dest Where to put the file, and what to name it. Defauts to
+#'   tempfile/dir
+#' @param overwrite Logical. Should files be overwritten if they aready exist?
+#' @param drive Optional. A `Microsoft365R::ms_drive`. Can be passed from parent
+#'   functions to avoid multiple calls, which can be faster.
+#' @param create_dir Logical. Should the destination directory be created if it
+#'   doesn't exist?
+#'
+#' @return The destination of the file or directory (`dest`)
 #' @export
-get_gbci <- function(path, dest = NULL, overwrite = FALSE) {
-  drive <- get_gbci_drive_connection()
+get_gbci <- function(path, dest = NULL, overwrite = FALSE, create_dir = TRUE,
+                     drive = NULL) {
+  if (is.null(drive)) drive <- get_gbci_drive_connection()
+
   if (is.null(drive$get_item_properties(path)$folder)) {
     get_gbci_file(
       path = path, dest = dest, overwrite = overwrite, drive = drive
     )
   } else {
-    get_gbci_dir(path = path, dest = dest, overwrite = overwrite, drive = drive)
+    get_gbci_dir(
+      path = path, dest = dest, overwrite = overwrite, drive = drive,
+      create_dir = create_dir
+    )
   }
 }
 
-#' Get a file from the GBCI SharePoint
-#'
-#' @details This function requires access to the SharePoint in the first place.
-#'
-#' @param path Path to file on SharePoint
-#' @param dest Where to put the file (and what to name it). Defaults to a temp
-#'   file.
-#' @param overwrite Logical. Should files be overwritten if they already exist?
-#' @param drive Optional. A `Microsoft365R::ms_drive`. Can be passed from parent
-#'   functions to avoid multiple calls, which can be faster.
-#'
-#' @return Character. The local path to the downloaded file.
+#' @rdname get_gbci
 #' @export
-get_gbci_file <- function(path, dest = NULL, overwrite = FALSE, drive = NULL) {
+get_gbci_file <- function(path, dest = NULL, overwrite = FALSE,
+                          create_dir = TRUE, drive = NULL) {
   ext <- fs::path_ext(path)
-
-  if (is.null(drive)) {
-    drive <- get_gbci_drive_connection()
+  if (is.null(drive)) drive <- get_gbci_drive_connection()
+  if (create_dir) {
+    dir.create(fs::path_dir(dest), recursive = TRUE, showWarnings = FALSE)
   }
-
-  if (is.null(dest)) {
-    dest <- fs::file_temp(ext = ext)
-  }
-
+  if (is.null(dest)) dest <- fs::file_temp(ext = ext)
   drive$download_file(path, dest = dest, overwrite = overwrite)
   dest
 }
 
-#' Download a directory from SharePoint
-#'
-#' @param path Path to the directory on SharePoint
-#' @param dest Path to where the file should be downloaded
-#' @param create_dir Logical. If the destination directory does not exist,
-#'   create it?
-#' @inheritParams get_gbci_file
-#'
-#' @return Returns `dest`
-#' @export
-#'
+#' @rdname get_gbci
 #' @examples
 #' \dontrun{
 #' get_gbci_dir("Raw Data/SPECTRAmax/aragaki-kai/", "path/to/my/dir")
 #' }
-get_gbci_dir <- function(path,
-                         dest = NULL,
-                         overwrite = FALSE,
-                         create_dir = TRUE,
-                         drive = NULL) {
-  if (is.null(drive)) {
-    drive <- get_gbci_drive_connection()
-  }
+#' @export
+get_gbci_dir <- function(path, dest = NULL, overwrite = FALSE,
+                         create_dir = TRUE, drive = NULL) {
+  if (is.null(drive)) drive <- get_gbci_drive_connection()
 
   if (is.null(drive$get_item_properties(path)$folder)) {
     stop("Specified path is not a directory")
   }
 
   if (is.null(dest)) dest <- tempdir()
-
   items <- drive$list_items(path, full_names = TRUE)
-  if (create_dir) {
-    dir.create(dest, recursive = TRUE, showWarnings = FALSE)
-  }
+  if (create_dir) dir.create(dest, recursive = TRUE, showWarnings = FALSE)
 
   apply(
     items, 1, get_recursive,
@@ -273,9 +263,7 @@ list_recursive <- function(item, drive) {
     items <- drive$list_items(item[["name"]], full_names = TRUE)
     apply(items, 1, list_recursive, drive, simplify = FALSE)
   } else {
-    item |>
-      t() |>
-      tibble::as_tibble()
+    tibble::as_tibble(t(item))
   }
 }
 
