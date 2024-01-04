@@ -207,7 +207,7 @@ get_gbci_file <- function(path, dest = NULL, overwrite = FALSE, drive = NULL) {
 #' get_gbci_dir("Raw Data/SPECTRAmax/aragaki-kai/", "path/to/my/dir")
 #' }
 get_gbci_dir <- function(path,
-                         dest = tempdir(),
+                         dest = NULL,
                          overwrite = FALSE,
                          create_dir = TRUE,
                          drive = NULL) {
@@ -218,6 +218,8 @@ get_gbci_dir <- function(path,
   if (is.null(drive$get_item_properties(path)$folder)) {
     stop("Specified path is not a directory")
   }
+
+  if (is.null(dest)) dest <- tempdir()
 
   items <- drive$list_items(path, full_names = TRUE)
   if (create_dir) {
