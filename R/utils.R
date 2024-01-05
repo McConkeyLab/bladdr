@@ -190,10 +190,10 @@ get_gbci_file <- function(path, dest = NULL, overwrite = FALSE,
                           create_dir = TRUE, drive = NULL) {
   ext <- fs::path_ext(path)
   if (is.null(drive)) drive <- get_gbci_drive_connection()
+  if (is.null(dest)) dest <- fs::file_temp(ext = ext)
   if (create_dir) {
     dir.create(fs::path_dir(dest), recursive = TRUE, showWarnings = FALSE)
   }
-  if (is.null(dest)) dest <- fs::file_temp(ext = ext)
   drive$download_file(path, dest = dest, overwrite = overwrite)
   dest
 }
