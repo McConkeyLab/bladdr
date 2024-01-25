@@ -158,7 +158,7 @@ make_pipette_vol <- function(vol) {
 #' depending on the path argument.
 #'
 #' @param path Path to file or directory on SharePoint
-#' @param dest Where to put the file, and what to name it. Defauts to
+#' @param dest Where to put the file, and what to name it. Defaults to
 #'   tempfile/dir
 #' @param overwrite Logical. Should files be overwritten if they aready exist?
 #' @param drive Optional. A `Microsoft365R::ms_drive`. Can be passed from parent

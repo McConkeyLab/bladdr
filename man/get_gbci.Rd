@@ -27,7 +27,7 @@ get_gbci_dir(
 \arguments{
 \item{path}{Path to file or directory on SharePoint}
 
-\item{dest}{Where to put the file, and what to name it. Defauts to
+\item{dest}{Where to put the file, and what to name it. Defaults to
 tempfile/dir}
 
 \item{overwrite}{Logical. Should files be overwritten if they aready exist?}
