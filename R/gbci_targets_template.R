@@ -44,7 +44,7 @@ add_project <- function(project) {
   make_skeleton()
   make_make(project)
   targets::tar_config_set(
-    script = fs::path("R", "targets", project, ext = ".R"),
+    script = fs::path("R", "targets", project, ext = "R"),
     store = fs::path("stores", project),
     project = project
   )
