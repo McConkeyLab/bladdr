@@ -57,7 +57,7 @@ add_project <- function(project) {
       "",
       "tar_options_set(",
       "  packages = c(",
-      "    conflicted # MUST be loaded last",
+      "    \"conflicted\" # MUST be loaded last",
       "  )",
       ")",
       "",
