@@ -61,7 +61,7 @@ add_project <- function(project) {
       "  )",
       ")",
       "",
-      "source(\"./R/targets/%s.R\")",
+      "source(\"./R/functions/%s.R\")",
       "",
       "list(",
       "",
