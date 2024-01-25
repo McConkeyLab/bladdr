@@ -55,7 +55,7 @@ add_project <- function(project) {
     c("library(targets)",
       "library(tarchetypes)",
       "",
-      "tar_options_set(",
+      "tar_option_set(",
       "  packages = c(",
       "    \"conflicted\" # MUST be loaded last",
       "  )",
