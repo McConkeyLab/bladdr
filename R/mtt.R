@@ -39,10 +39,6 @@ mtt_calc.data.frame <- function(x, ic_pct = 50, ...) {
     fit_mtt(drug_conc, ic_pct)
 }
 
-mtt_calc.gp <- function(x, ...) {
-
-}
-
 #' @param condition_names What to name each 'sector' of the plate
 #'
 #' @export
