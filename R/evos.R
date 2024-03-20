@@ -28,6 +28,7 @@ evos_flatten <- function(path, parse_names = FALSE) {
 #'   "parent-directory/b{N}_{YYYY-MM-DD}<_filter>.tif" Where {N} is the number
 #'   of the beacon and <_filter> is an underscore prepended filter name (eg
 #'   _phase) which may or may not exist.
+#' @noRd
 evos_parse_name <- function(name) {
   fname <-  basename(name)
   fname_split <- strsplit(fname, split = " ")[[1]]

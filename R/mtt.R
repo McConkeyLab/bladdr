@@ -124,6 +124,7 @@ mtt_plot <- function(mtt, plot_ics = FALSE) {
 #' @param df a `data.frame`
 #'
 #' @return a `tibble` without any conditions that are `NA`
+#' @noRd
 rm_unassigned_wells <- function(df) {
   dplyr::filter(df, !is.na(as.character(.data$condition)))
 }
@@ -134,6 +135,7 @@ rm_unassigned_wells <- function(df) {
 #'   `nm660`.
 #'
 #' @return a `tibble`
+#' @noRd
 subtract_bg_and_get_mean <- function(df) {
   dplyr::group_by(df, .data$condition, .data$drug) |>
     dplyr::mutate(
@@ -149,6 +151,7 @@ subtract_bg_and_get_mean <- function(df) {
 #'   conc of drug), and `mean` (mean of `diff` per condition and conc)
 #'
 #' @return a `tibble`
+#' @noRd
 normalize_to_lowest_conc <- function(df) {
   dplyr::group_by(df, .data$condition) |>
     dplyr::mutate(div = .data$diff / .data$mean[which(.data$drug == min(.data$drug))]) |>
@@ -164,6 +167,7 @@ normalize_to_lowest_conc <- function(df) {
 #'   concentration at which growth was reduced by 25% vs baseline
 #'
 #' @return A `tibble`
+#' @noRd
 fit_mtt <- function(df, drug_conc, ic_pct) {
   dplyr::group_by(df, .data$condition) |>
     tidyr::nest() |>
@@ -219,6 +223,7 @@ mtt_model <- function(data) {
 #' @param length_out number of points to generate. More points = smoother curve.
 #'
 #' @return A `data.frame` of x and y coordinates for a given fit
+#' @noRd
 make_curve <- function(fit, drug_conc, length_out = 1000) {
   x <- exp(seq(log(min(drug_conc)), log(max(drug_conc)), length.out = length_out))
   if (!is.null(fit)) {
@@ -267,6 +272,7 @@ get_ic <- function(fit, ic_pct) {
 #' @param quiet Should conversion from 0 to some small number be done silently?
 #'
 #' @return a numeric vector of the same length and order as input
+#' @noRd
 sanitize_drug_conc <- function(drug_conc, quiet = FALSE) {
   if (min(drug_conc) == 0) {
     sorted <- unique(sort(drug_conc))

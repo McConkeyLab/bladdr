@@ -1,19 +1,28 @@
 reference:
-- contents:
-  - starts_with("pcr")
 - title: "Exploratory Data Analysis"
   desc: "Functions for rapid data exploration."
 - contents:
   - starts_with("eda")
+- title: "I/O"
+  desc: "Functions for file acquisition"
+- contents:
+  - starts_with("get_gbci")
+  - get_pcr
+  - starts_with("list")
+- title: "MTT"
+  desc: "Functions for analyzing MTTs"
+- contents:
+  - starts_with("mtt")
+  - get_ic
 - title: "Utilities"
   desc: "Misc. quality of life functions."
 - contents:
-  - dilute
-  - dummy_rna_conc
   - get_gene_expression
+  - dummy_rna_conc
+  - add_project
+  - dilute
   - make_pipette_vol
-  - summon_cell_data
   - theme_tufte
-  - volcano_plot
+  - evos_flatten
 template:
   bootstrap: 5
