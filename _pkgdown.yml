@@ -1,4 +1,29 @@
 url: https://mcconkeylab.github.io/bladdr/
 template:
   bootstrap: 5
-
+reference:
+- title: "Exploratory Data Analysis"
+  desc: "Functions for rapid data exploration."
+- contents:
+  - starts_with("eda")
+- title: "I/O"
+  desc: "Functions for file acquisition"
+- contents:
+  - starts_with("get_gbci")
+  - get_pcr
+  - starts_with("list")
+- title: "MTT"
+  desc: "Functions for analyzing MTTs"
+- contents:
+  - starts_with("mtt")
+  - get_ic
+- title: "Utilities"
+  desc: "Misc. quality of life functions."
+- contents:
+  - get_gene_expression
+  - dummy_rna_conc
+  - add_project
+  - dilute
+  - make_pipette_vol
+  - theme_tufte
+  - evos_flatten
