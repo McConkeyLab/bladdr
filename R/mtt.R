@@ -55,7 +55,7 @@ mtt_calc.spectramax <- function(x, condition_names, drug_conc, ic_pct = 50, ...)
 
 #' @export
 #' @rdname mtt_calc
-mtt_calc.gplate <- function(x, ic_pct = 50, ...) {
+mtt_calc.gp <- function(x, ic_pct = 50, ...) {
   mtt_calc(gplate::serve(x), ic_pct, ...)
 }
 

@@ -4,7 +4,7 @@
 \alias{mtt_calc}
 \alias{mtt_calc.data.frame}
 \alias{mtt_calc.spectramax}
-\alias{mtt_calc.gplate}
+\alias{mtt_calc.gp}
 \title{Calculate and fit MTT model from absorbance data}
 \usage{
 mtt_calc(x, ...)
@@ -13,7 +13,7 @@ mtt_calc(x, ...)
 
 \method{mtt_calc}{spectramax}(x, condition_names, drug_conc, ic_pct = 50, ...)
 
-\method{mtt_calc}{gplate}(x, ic_pct = 50, ...)
+\method{mtt_calc}{gp}(x, ic_pct = 50, ...)
 }
 \arguments{
 \item{x}{A \code{data.frame}, \code{spectramax}, or \code{gp} object. See Details.}
