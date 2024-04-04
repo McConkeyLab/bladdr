@@ -20,11 +20,6 @@ mtt_calc <- function(x, ...) {
   UseMethod("mtt_calc")
 }
 
-#' @param drug_conc a numeric vector containing drug concentrations of the
-#'   conditions, from left to right
-#' @param ic_pct numeric. The %IC desired, where 25 would represent the
-#'   concentration at which growth was reduced by 25% vs baseline
-#'
 #' @export
 #' @rdname mtt_calc
 mtt_calc.data.frame <- function(x, ic_pct = 50, ...) {
@@ -40,7 +35,10 @@ mtt_calc.data.frame <- function(x, ic_pct = 50, ...) {
 }
 
 #' @param condition_names What to name each 'sector' of the plate
-#'
+#' @param drug_conc a numeric vector containing drug concentrations of the
+#'   conditions, from left to right
+#' @param ic_pct numeric. The %IC desired, where 25 would represent the
+#'   concentration at which growth was reduced by 25% vs baseline
 #' @export
 #' @rdname mtt_calc
 mtt_calc.spectramax <- function(x, condition_names, drug_conc, ic_pct = 50, ...) {
